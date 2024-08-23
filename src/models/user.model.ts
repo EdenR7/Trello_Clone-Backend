@@ -1,6 +1,27 @@
 import { model, Schema } from "mongoose";
 import { UserI } from "../types/user.types";
-import { boardSubDocumentSchema } from "./subDocuments";
+import { MemberSubDocumentI } from "../types/subDocument.types";
+import { boardSubDocumentSchema } from "./board.model";
+
+export const MemberSubDocumentSchema = new Schema<MemberSubDocumentI>({
+  memberId: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  username: {
+    type: String,
+    required: true,
+  },
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
+});
 
 const userSchema = new Schema<UserI>({
   username: {
