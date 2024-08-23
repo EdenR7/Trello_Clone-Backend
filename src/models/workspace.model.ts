@@ -3,6 +3,7 @@ import { WorkspaceI } from "../types/workspace.types";
 import {
   activitySubDocumentSchema,
   boardSubDocumentSchema,
+  MemberSubDocumentSchema,
 } from "./subDocuments";
 
 const workspaceSchema = new Schema<WorkspaceI>({
@@ -24,7 +25,7 @@ const workspaceSchema = new Schema<WorkspaceI>({
     required: true,
   },
   members: {
-    type: [Schema.Types.ObjectId],
+    type: [MemberSubDocumentSchema],
     default: [],
     ref: "User",
     required: true,
