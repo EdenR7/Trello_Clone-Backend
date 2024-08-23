@@ -1,8 +1,6 @@
 import { Schema } from "mongoose";
 import {
   ActivitySubDocumentI,
-  BoardSubDocumentI,
-  MemberSubDocumentI,
 } from "../types/subDocument.types";
 
 export const activitySubDocumentSchema = new Schema<ActivitySubDocumentI>({

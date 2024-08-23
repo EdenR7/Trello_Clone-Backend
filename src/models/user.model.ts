@@ -3,7 +3,7 @@ import { UserI } from "../types/user.types";
 import { MemberSubDocumentI } from "../types/subDocument.types";
 import { boardSubDocumentSchema } from "./board.model";
 
-export const MemberSubDocumentSchema = new Schema<MemberSubDocumentI>({
+export const memberSubDocumentSchema = new Schema<MemberSubDocumentI>({
   memberId: {
     type: Schema.Types.ObjectId,
     ref: "User",

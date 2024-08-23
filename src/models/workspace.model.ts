@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import { WorkspaceI } from "../types/workspace.types";
 import { activitySubDocumentSchema } from "./activity.model";
-import { MemberSubDocumentSchema } from "./user.model";
+import { memberSubDocumentSchema } from "./user.model";
 import { boardSubDocumentSchema } from "./board.model";
 
 const workspaceSchema = new Schema<WorkspaceI>({
@@ -23,7 +23,7 @@ const workspaceSchema = new Schema<WorkspaceI>({
     required: true,
   },
   members: {
-    type: [MemberSubDocumentSchema],
+    type: [memberSubDocumentSchema],
     default: [],
     ref: "User",
     required: true,
