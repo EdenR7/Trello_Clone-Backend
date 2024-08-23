@@ -1,11 +1,37 @@
 import { model, Schema } from "mongoose";
-import { IUser } from "../types/userTypes";
+import { UserI } from "../types/user.types";
 
-const userSchema = new Schema<IUser>({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
+const userSchema = new Schema<UserI>({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
+  workspaces: {
+    type: [Schema.Types.ObjectId],
+    default: [],
+    ref: "Workspace",
+    required: true,
+  },
 });
 
-const User = model<IUser>("User", userSchema);
+const UserModel = model<UserI>("User", userSchema);
 
-export default User;
+export default UserModel;
