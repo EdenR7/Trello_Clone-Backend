@@ -1,12 +1,26 @@
 import express, { Application } from "express";
-import userRoutes from "./routes/user.route";
+// import userRoutes from "./routes/user.route";
+import connectDB from "./config/db";
+import cors from "cors";
+import { errorHandler } from "./middlewares/errors.middleware";
+import authRouter from "./routes/auth.routes";
+import userRouter from "./routes/user.route";
+import { verifyToken } from "./middlewares/auth.middleware";
 
 const app: Application = express();
 
-// Middleware
-app.use(express.json());
+export async function main() {
+  await connectDB();
+  app.use(express.json());
+  app.use(cors());
 
-// Routes
-app.use("/api/users", userRoutes);
+  // Middleware
+
+  // Routes
+  app.use("/api/auth", authRouter);
+  app.use("/api/user", verifyToken, userRouter);
+
+  app.use(errorHandler);
+}
 
 export default app;

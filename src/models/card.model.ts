@@ -69,17 +69,13 @@ const cardSchema = new Schema<CardI>({
       time: { type: Date },
     },
   },
-  // dueTime: {
-  //   date: { type: Date },
-  //   time: { type: Date }, // instead of using string, we can use Date type
-  // },
   description: {
     type: String,
   },
-  activity: {
-    type: [activitySubDocumentSchema],
-    default: [],
-  },
+  // activity: {
+  //   type: [activitySubDocumentSchema],
+  //   default: [],
+  // },
   checklist: {
     type: [checklistSchema],
     default: [],

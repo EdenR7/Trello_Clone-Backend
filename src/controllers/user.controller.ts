@@ -1,25 +1,39 @@
-import { Request, Response } from "express";
-import User from "../models/user.model";
+import { NextFunction, Response } from "express";
+import UserModel from "../models/user.model";
+import { AuthRequest } from "../types/auth.types";
+import { CustomError } from "../utils/errors/CustomError";
+import BoardModel from "../models/board.model";
 
-export const getUsers = async (req: Request, res: Response) => {
-  const { query } = req;
+export const getUser = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const users = await User.find({ name: { $regex: query.name } });
-    users[0].name;
-    res.json({ message: "Get all users 12233r3dsf" });
+    const user = await UserModel.findById(req.userId).select("-password");
+
+    if (!user) {
+      throw new CustomError("User not found", 404);
+    }
+    res.json(user);
   } catch (error) {
-    const err = error as Error;
-    res.status(500).json({ error: err.message });
+    console.log("getUser Error");
+    next(error);
   }
 };
 
-export const getUser = async (req: Request, res: Response) => {
-  const { id } = req.params;
+export async function getAllUserBoards(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    // getting user from the database
-    res.json({ message: `Get a user ${id}` });
+    const usersBoards = await BoardModel.find({
+      $or: [{ admin: req.userId }, { "members.memberId": req.userId }],
+    });
+    return res.json(usersBoards);
   } catch (error) {
-    const err = error as Error;
-    res.status(500).json({ error: err.message });
+    console.log("getAllUserBoards Error");
+    next(error);
   }
-};
+}

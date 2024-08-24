@@ -32,11 +32,11 @@ const workspaceSchema = new Schema<WorkspaceI>({
     ref: "User",
     required: true,
   },
-  activity: {
-    type: [activitySubDocumentSchema],
-    default: [],
-    required: true,
-  },
+  // activity: {
+  //   type: [activitySubDocumentSchema],
+  //   default: [],
+  //   required: true,
+  // },
 });
 
 const WorkspaceModel = model<WorkspaceI>("Workspace", workspaceSchema);

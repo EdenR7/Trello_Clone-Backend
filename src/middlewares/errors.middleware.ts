@@ -9,5 +9,7 @@ export const errorHandler = (
 ): Response => {
   const { errorName, errorMessage, statusCode } = getErrorData(err);
   console.log(errorName, errorMessage);
+  if (errorName === "CastError")
+    return res.status(404).json({ message: errorMessage });
   return res.status(statusCode).json({ message: errorMessage });
 };

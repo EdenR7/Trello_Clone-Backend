@@ -67,6 +67,7 @@ const boardSchema = new Schema<BoardI>({
     ref: "Card",
     default: [],
   },
+  // activity
 });
 
 const BoardModel = model<BoardI>("Board", boardSchema);

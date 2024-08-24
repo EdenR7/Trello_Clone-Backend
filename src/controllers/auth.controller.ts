@@ -12,6 +12,9 @@ const SALT_ROUNDS = 10;
 
 export const register = async (req: Request, res: Response) => {
   const { firstName, lastName, email, username, password } = req.body;
+  if (!firstName || !lastName || !email || !username || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
 
   try {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
@@ -60,7 +63,7 @@ export const login = async (
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
       expiresIn: "5h",
     });
-    res.status(200).json({ token });
+    res.status(200).json(token);
   } catch (error) {
     console.log("login error:");
     next(error);
