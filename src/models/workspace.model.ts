@@ -25,7 +25,6 @@ const workspaceSchema = new Schema<WorkspaceI>({
   members: {
     type: [memberSubDocumentSchema],
     default: [],
-    ref: "User",
     required: true,
   },
   admin: {

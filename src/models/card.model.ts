@@ -1,6 +1,40 @@
 import { model, Schema } from "mongoose";
 import { activitySubDocumentSchema } from "./activity.model";
-import { CardI } from "../types/card.types";
+import { CardI, ChecklistI, TodoI } from "../types/card.types";
+import { memberSubDocumentSchema } from "./user.model";
+import { LabelI } from "../types/label.types";
+
+export const labelSchema = new Schema<LabelI>({
+  title: {
+    type: String,
+    required: true,
+  },
+  color: {
+    type: String,
+    required: true,
+  },
+});
+
+const todoSchema = new Schema<TodoI>({
+  title: {
+    type: String,
+    required: true,
+  },
+  isComplete: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+});
+
+const checklistSchema = new Schema<ChecklistI>({
+  name: {
+    type: String,
+    required: true,
+    default: "Checklist",
+  },
+  todos: { type: [todoSchema], default: [] },
+});
 
 const cardSchema = new Schema<CardI>({
   admin: {
@@ -9,8 +43,8 @@ const cardSchema = new Schema<CardI>({
     required: true,
   },
   bgCover: {
-    isActive: { type: Boolean, default: false }, //instead of adding bgCoverState, may change
-    bgColor: { type: String, default: "" },
+    isCover: { type: Boolean, default: false }, //instead of adding bgCoverState, may change
+    bg: { type: String, default: "" },
   },
   title: {
     type: String,
@@ -18,21 +52,27 @@ const cardSchema = new Schema<CardI>({
   },
 
   members: {
-    type: [Schema.Types.ObjectId],
-    ref: "User",
+    type: [memberSubDocumentSchema],
     default: [],
     required: true,
   },
   labels: {
-    type: [Schema.Types.ObjectId],
-    ref: "Label",
+    type: [labelSchema],
+    default: [], // We can define default values for arrays
   },
   startDate: {
     type: Date,
   },
   dueDate: {
-    type: Date,
+    type: {
+      date: { type: Date },
+      time: { type: Date },
+    },
   },
+  // dueTime: {
+  //   date: { type: Date },
+  //   time: { type: Date }, // instead of using string, we can use Date type
+  // },
   description: {
     type: String,
   },
@@ -41,8 +81,7 @@ const cardSchema = new Schema<CardI>({
     default: [],
   },
   checklist: {
-    type: [Schema.Types.ObjectId],
-    ref: "Checklist",
+    type: [checklistSchema],
     default: [],
   },
   position: {
