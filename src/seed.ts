@@ -47,11 +47,11 @@ function createChecklist(name: string) {
   };
 }
 
-async function createCard(title: string, adminId: any) {
+async function createCard(title: string, adminId: any, position: number) {
   const card = new CardModel({
     admin: adminId,
     title,
-    position: Math.floor(Math.random() * 100),
+    position,
     checklist: [createChecklist("Main Checklist")],
     dueDate: {
       date: new Date(),
@@ -64,18 +64,18 @@ async function createCard(title: string, adminId: any) {
   return card;
 }
 
-async function createList(name: string, adminId: any) {
+async function createList(name: string, adminId: any, position: number) {
   const cards = [];
   const numOfCards = Math.floor(Math.random() * 4) + 1; // 1-4 cards
 
   for (let i = 0; i < numOfCards; i++) {
-    const card = await createCard(`Card ${i + 1}`, adminId);
+    const card = await createCard(`Card ${i + 1}`, adminId, i+1);
     cards.push(card._id);
   }
 
   const list = new ListModel({
     name,
-    position: Math.floor(Math.random() * 100),
+    position,
     cards,
   });
 
@@ -87,7 +87,7 @@ async function createBoard(name: string, adminId: any) {
   const lists = [];
 
   for (let i = 0; i < 3; i++) {
-    const list = await createList(`List ${i + 1}`, adminId);
+    const list = await createList(`List ${i + 1}`, adminId, i+1);
     lists.push(list._id);
   }
 

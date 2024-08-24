@@ -86,7 +86,6 @@ const cardSchema = new Schema<CardI>({
   },
   isArchived: {
     type: Boolean,
-    required: true,
     default: false,
   },
 });
