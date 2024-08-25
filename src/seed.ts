@@ -1,12 +1,13 @@
 import { config } from "dotenv";
 import connectDB from "./config/db";
-import { connection } from "mongoose";
+import { connection, Types } from "mongoose";
 import bcrypt from "bcrypt";
 import UserModel from "./models/user.model";
 import WorkspaceModel from "./models/workspace.model";
 import BoardModel from "./models/board.model";
 import ListModel from "./models/list.model";
 import CardModel from "./models/card.model";
+import { Type } from "typescript";
 
 const SALT_ROUNDS = 10;
 
@@ -47,11 +48,17 @@ function createChecklist(name: string) {
   };
 }
 
-async function createCard(title: string, adminId: any, position: number) {
+async function createCard(
+  title: string,
+  adminId: any,
+  position: number,
+  listId: Types.ObjectId
+) {
   const card = new CardModel({
     admin: adminId,
     title,
     position,
+    list: listId,
     checklist: [createChecklist("Main Checklist")],
     dueDate: new Date(),
     members: [], // Optionally add members here
@@ -62,19 +69,18 @@ async function createCard(title: string, adminId: any, position: number) {
 }
 
 async function createList(name: string, adminId: any, position: number) {
-  const cards = [];
+  const cards: any = [];
   const numOfCards = Math.floor(Math.random() * 4) + 1; // 1-4 cards
-
-  for (let i = 0; i < numOfCards; i++) {
-    const card = await createCard(`Card ${i + 1}`, adminId, i + 1);
-    cards.push(card._id);
-  }
 
   const list = new ListModel({
     name,
     position,
     cards,
   });
+  for (let i = 0; i < numOfCards; i++) {
+    const card = await createCard(`Card ${i + 1}`, adminId, i + 1, list._id);
+    cards.push(card._id);
+  }
 
   await list.save();
   return list;
