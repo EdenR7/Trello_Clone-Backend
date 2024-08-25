@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { Model, model, Schema } from "mongoose";
 import { activitySubDocumentSchema } from "./activity.model";
 import { CardI, ChecklistI, TodoI } from "../types/card.types";
 import { memberSubDocumentSchema } from "./user.model";
@@ -75,6 +75,11 @@ const cardSchema = new Schema<CardI>({
   checklist: {
     type: [checklistSchema],
     default: [],
+  },
+  list: {
+    type: Schema.Types.ObjectId,
+    ref: "List",
+    required: true,
   },
   position: {
     type: Number,
