@@ -33,14 +33,10 @@ const boardSchema = new Schema<BoardI>({
   },
   members: {
     type: [Schema.Types.ObjectId],
+    ref: "User",
     default: [],
     required: true,
   },
-  // members: {
-  //   type: [memberSubDocumentSchema],
-  //   default: [],
-  //   required: true,
-  // },
   labels: {
     type: [labelSchema],
     default: [],
@@ -60,10 +56,13 @@ const boardSchema = new Schema<BoardI>({
   },
   archivedLists: {
     type: [
-      {
-        listId: { type: Schema.Types.ObjectId, ref: "List" },
-        name: { type: String },
-      },
+      new Schema(
+        {
+          listId: { type: Schema.Types.ObjectId, ref: "List" },
+          name: { type: String },
+        },
+        { _id: false }
+      ),
     ],
     default: [],
   },
