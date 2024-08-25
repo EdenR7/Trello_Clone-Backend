@@ -29,13 +29,18 @@ const boardSchema = new Schema<BoardI>({
   },
   bg: {
     type: String,
-    required: true,
+    default: "",
   },
   members: {
-    type: [memberSubDocumentSchema],
+    type: [Schema.Types.ObjectId],
     default: [],
     required: true,
   },
+  // members: {
+  //   type: [memberSubDocumentSchema],
+  //   default: [],
+  //   required: true,
+  // },
   labels: {
     type: [labelSchema],
     default: [],
