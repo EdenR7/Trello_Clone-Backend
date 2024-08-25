@@ -7,11 +7,13 @@ export interface CardDueTime {
   time: Date;
 }
 export interface TodoI {
+  _id: Types.ObjectId;
   title: string;
   isComplete: boolean;
 }
 
-export interface ChecklistI {
+export interface ChecklistI extends Document {
+  _id: Types.ObjectId;
   name: string;
   todos: TodoI[];
 }

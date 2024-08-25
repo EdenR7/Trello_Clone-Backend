@@ -1,4 +1,4 @@
-import e, { NextFunction, Response } from "express";
+import { NextFunction, Response } from "express";
 import { AuthRequest } from "../types/auth.types";
 import CardModel from "../models/card.model";
 import { CustomError } from "../utils/errors/CustomError";
@@ -128,7 +128,7 @@ export async function removeBgCover(
   }
 }
 
-export async function editCardTitle(
+export async function updateCardTitle(
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -163,19 +163,16 @@ export async function addMemberToArr(
   const { memberId } = req.body;
 
   try {
-    // Check if the member exists
     const member = await UserModel.findById(memberId);
     if (!member) {
       throw new CustomError("Member not found", 404);
     }
 
-    // Check if the card exists and if the member is already in the array
     const card = await CardModel.findById(cardId);
     if (!card) {
       throw new CustomError("Card not found", 404);
     }
 
-    // Check if the member is already in the members array
     const isMemberAlreadyAdded = card.members.includes(memberId);
     if (isMemberAlreadyAdded) {
       return res
@@ -183,11 +180,9 @@ export async function addMemberToArr(
         .json({ message: "Member is already added to this card." });
     }
 
-    // Add the member to the card's members array
     card.members.push(memberId);
     await card.save();
 
-    // Return the updated card
     res.status(200).json(card);
   } catch (error) {
     console.log("addMemberToArr error: ", error);
@@ -277,6 +272,191 @@ export async function addCardDates(
     res.status(200).json(card);
   } catch (error) {
     console.error("addCardDates error: ", error);
+    next(error);
+  }
+}
+
+export async function addChecklistToArr(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { checklistName } = req.body;
+  try {
+    const card = await CardModel.findByIdAndUpdate(
+      cardId,
+      {
+        $push: { checklist: { name: checklistName, todos: [] } },
+      },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addChecklist error: ", error);
+    next(error);
+  }
+}
+
+export async function removeChecklistFromArr(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { checklistId } = req.body;
+  try {
+    const card = await CardModel.findByIdAndUpdate(
+      cardId,
+      {
+        $pull: { checklist: { _id: checklistId } },
+      },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addChecklist error: ", error);
+    next(error);
+  }
+}
+
+export async function addTodoToArr(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { checklistId, todoTitle } = req.body;
+  try {
+    const card = await CardModel.findOneAndUpdate(
+      { _id: cardId, "checklist._id": checklistId },
+      {
+        $push: { "checklist.$.todos": { title: todoTitle, isComplete: false } },
+      },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addTodo error: ", error);
+    next(error);
+  }
+}
+
+export async function removeTodoFromArr(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+
+  const { checklistId, todoId } = req.body;
+  try {
+    const card = await CardModel.findOneAndUpdate(
+      { _id: cardId, "checklist._id": checklistId },
+      { $pull: { "checklist.$.todos": { _id: todoId } } },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addTodo error: ", error);
+    next(error);
+  }
+}
+
+export async function updateTodoTitle(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { checklistId, todoId, newTodoTitle } = req.body;
+
+  if (!checklistId || !todoId || !newTodoTitle) {
+    return next(
+      new CustomError("checklistId, todoId, and newTodoTitle are required", 400)
+    );
+  }
+  try {
+    const card = await CardModel.findOneAndUpdate(
+      {
+        _id: cardId,
+        "checklist._id": checklistId,
+        "checklist.todos._id": todoId,
+      },
+      {
+        $set: {
+          "checklist.$[chk].todos.$[td].title": newTodoTitle,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+        arrayFilters: [{ "chk._id": checklistId }, { "td._id": todoId }],
+      }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addTodo error: ", error);
+    next(error);
+  }
+}
+
+export async function toggleTodoComplete(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { checklistId, todoId } = req.body;
+
+  if (!checklistId || !todoId) {
+    return next(new CustomError("checklistId and todoId are required", 400));
+  }
+
+  try {
+    const card = await CardModel.findOne({ _id: cardId });
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+
+    const checklist = card.checklist.find(
+      (cl) => cl._id.toString() === checklistId
+    );
+    if (!checklist) {
+      throw new CustomError("Checklist not found", 404);
+    }
+
+    const todoIndex = checklist.todos.findIndex(
+      (todo) => todo._id.toString() === todoId
+    );
+    if (todoIndex === -1) {
+      throw new CustomError("Todo not found", 404);
+    }
+
+    // Toggle the isComplete status
+    checklist.todos[todoIndex].isComplete =
+      !checklist.todos[todoIndex].isComplete;
+
+    await card.save();
+
+    res.status(200).json(card);
+  } catch (error) {
+    console.error("toggleTodoComplete error: ", error);
     next(error);
   }
 }
