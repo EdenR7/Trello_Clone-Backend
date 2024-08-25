@@ -7,7 +7,6 @@ import WorkspaceModel from "./models/workspace.model";
 import BoardModel from "./models/board.model";
 import ListModel from "./models/list.model";
 import CardModel from "./models/card.model";
-import { Type } from "typescript";
 
 const SALT_ROUNDS = 10;
 
