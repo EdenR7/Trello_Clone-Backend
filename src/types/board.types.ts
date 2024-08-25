@@ -5,7 +5,7 @@ import { LabelI } from "./label.types";
 export interface BoardI {
   admin: Types.ObjectId;
   bg: string;
-  members: MemberSubDocumentI[];
+  members: Types.ObjectId[];
   labels: LabelI[];
   description?: string;
   // activity: any[];
