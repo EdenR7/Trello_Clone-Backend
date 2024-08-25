@@ -8,6 +8,7 @@ import userRouter from "./routes/user.route";
 import { verifyToken } from "./middlewares/auth.middleware";
 import cardRouter from "./routes/card.routes";
 import boardRouter from "./routes/board.routes";
+import listRouter from "./routes/list.routes";
 
 const app: Application = express();
 
@@ -23,6 +24,7 @@ export async function main() {
   app.use("/api/user", verifyToken, userRouter);
   app.use("/api/card", verifyToken, cardRouter);
   app.use("/api/board", verifyToken, boardRouter);
+  app.use("/api/list", verifyToken, listRouter);
 
   app.use(errorHandler);
 }
