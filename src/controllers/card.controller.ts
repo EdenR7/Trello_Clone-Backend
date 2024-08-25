@@ -161,10 +161,35 @@ export async function addMemberToArr(
 ) {
   const { cardId } = req.params;
   const { memberId } = req.body;
+  console.log(memberId);
 
-  if (!memberId) {
-    return next(new CustomError("Member ID is required", 400));
+  try {
+    const member = await UserModel.findById(memberId);
+    if (!member) {
+      throw new CustomError("user not found", 404);
+    }
+    const card = await CardModel.findByIdAndUpdate(
+      cardId,
+      { $push: { members: memberId } },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addMemberToArr error: ");
+    next(error);
   }
+}
+
+export async function removeMemberFromArr(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { memberId } = req.body;
 
   try {
     const member = await UserModel.findById(memberId);
@@ -177,18 +202,19 @@ export async function addMemberToArr(
       throw new CustomError("Card not found", 404);
     }
 
-    if (card.members.includes(memberId)) {
-      return res
-        .status(400)
-        .json({ message: "Member is already added to this card." });
+    if (!card.members.includes(memberId)) {
+      return res.status(400).json({ message: "Member is not in this card." });
     }
 
-    card.members.push(memberId);
-    await card.save();
+    const updatedCard = await CardModel.findByIdAndUpdate(
+      cardId,
+      { $pull: { members: memberId } },
+      { new: true, runValidators: true }
+    );
 
-    res.status(200).json(card);
+    res.status(200).json(updatedCard);
   } catch (error) {
-    console.error("addMemberToArr error: ", error);
+    console.log("removeMemberFromArr error: ", error);
     next(error);
   }
 }

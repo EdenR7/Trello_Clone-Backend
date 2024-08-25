@@ -4,6 +4,7 @@ import {
   editCardTitle,
   getCard,
   removeBgCover,
+  removeMemberFromArr,
   updateBgCoverColor,
   updateBgCoverState,
 } from "../controllers/card.controller";
@@ -23,5 +24,6 @@ cardRouter.patch("/:cardId/editTitle", editCardTitle);
 
 //Member routes
 cardRouter.post("/:cardId/member/add", addMemberToArr);
+cardRouter.delete("/:cardId/member/remove", removeMemberFromArr);
 
 export default cardRouter;
