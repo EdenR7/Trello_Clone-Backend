@@ -53,10 +53,7 @@ async function createCard(title: string, adminId: any, position: number) {
     title,
     position,
     checklist: [createChecklist("Main Checklist")],
-    dueDate: {
-      date: new Date(),
-      time: new Date(),
-    },
+    dueDate: new Date(),
     members: [], // Optionally add members here
   });
 
@@ -69,7 +66,7 @@ async function createList(name: string, adminId: any, position: number) {
   const numOfCards = Math.floor(Math.random() * 4) + 1; // 1-4 cards
 
   for (let i = 0; i < numOfCards; i++) {
-    const card = await createCard(`Card ${i + 1}`, adminId, i+1);
+    const card = await createCard(`Card ${i + 1}`, adminId, i + 1);
     cards.push(card._id);
   }
 
@@ -87,7 +84,7 @@ async function createBoard(name: string, adminId: any) {
   const lists = [];
 
   for (let i = 0; i < 3; i++) {
-    const list = await createList(`List ${i + 1}`, adminId, i+1);
+    const list = await createList(`List ${i + 1}`, adminId, i + 1);
     lists.push(list._id);
   }
 

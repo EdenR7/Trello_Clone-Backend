@@ -50,7 +50,6 @@ const cardSchema = new Schema<CardI>({
     type: String,
     required: true,
   },
-
   members: {
     type: [memberSubDocumentSchema],
     default: [],
@@ -64,10 +63,7 @@ const cardSchema = new Schema<CardI>({
     type: Date,
   },
   dueDate: {
-    type: {
-      date: { type: Date },
-      time: { type: Date },
-    },
+    type: Date,
   },
   description: {
     type: String,

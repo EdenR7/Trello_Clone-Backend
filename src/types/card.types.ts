@@ -26,7 +26,7 @@ export interface CardI extends Document {
   members: MemberSubDocumentI[];
   labels: LabelI[];
   startDate?: Date;
-  dueDate?: CardDueTime;
+  dueDate?: Date;
   description?: string;
   activity: ActivitySubDocumentI[];
   checklist: ChecklistI[];
