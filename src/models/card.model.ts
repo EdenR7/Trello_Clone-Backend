@@ -60,10 +60,10 @@ const cardSchema = new Schema<CardI>({
     default: [], // We can define default values for arrays
   },
   startDate: {
-    type: Date,
+    type: Date || null,
   },
   dueDate: {
-    type: Date,
+    type: Date || null,
   },
   description: {
     type: String,

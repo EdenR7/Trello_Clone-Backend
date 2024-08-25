@@ -161,24 +161,36 @@ export async function addMemberToArr(
 ) {
   const { cardId } = req.params;
   const { memberId } = req.body;
-  console.log(memberId);
 
   try {
+    // Check if the member exists
     const member = await UserModel.findById(memberId);
     if (!member) {
-      throw new CustomError("user not found", 404);
+      throw new CustomError("Member not found", 404);
     }
-    const card = await CardModel.findByIdAndUpdate(
-      cardId,
-      { $push: { members: memberId } },
-      { new: true, runValidators: true }
-    );
+
+    // Check if the card exists and if the member is already in the array
+    const card = await CardModel.findById(cardId);
     if (!card) {
-      throw new CustomError("card not found", 404);
+      throw new CustomError("Card not found", 404);
     }
+
+    // Check if the member is already in the members array
+    const isMemberAlreadyAdded = card.members.includes(memberId);
+    if (isMemberAlreadyAdded) {
+      return res
+        .status(400)
+        .json({ message: "Member is already added to this card." });
+    }
+
+    // Add the member to the card's members array
+    card.members.push(memberId);
+    await card.save();
+
+    // Return the updated card
     res.status(200).json(card);
   } catch (error) {
-    console.log("addMemberToArr error: ");
+    console.log("addMemberToArr error: ", error);
     next(error);
   }
 }
@@ -215,6 +227,56 @@ export async function removeMemberFromArr(
     res.status(200).json(updatedCard);
   } catch (error) {
     console.log("removeMemberFromArr error: ", error);
+    next(error);
+  }
+}
+
+export async function addCardDates(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { startDate, dueDate } = req.body;
+
+  try {
+    const parsedStartDate = startDate ? new Date(startDate) : undefined;
+    const parsedDueDate = dueDate ? new Date(dueDate) : undefined;
+
+    // Validate start date
+    if (startDate) {
+      if (!parsedStartDate || isNaN(parsedStartDate.getTime())) {
+        throw new CustomError("Invalid start date format.", 400);
+      }
+      if (parsedStartDate.toISOString().split("T")[1] !== "00:00:00.000Z") {
+        throw new CustomError("Start date should not include time.", 400);
+      }
+    }
+
+    // Validate due date
+    if (dueDate) {
+      if (!parsedDueDate || isNaN(parsedDueDate.getTime())) {
+        throw new CustomError("Invalid due date format.", 400);
+      }
+    }
+
+    // Check if due date is after start date
+    if (parsedStartDate && parsedDueDate && parsedDueDate < parsedStartDate) {
+      throw new CustomError("Due date must be after the start date.", 400);
+    }
+
+    const card = await CardModel.findById(cardId);
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+
+    card.startDate = parsedStartDate;
+    card.dueDate = parsedDueDate;
+    await card.save();
+
+    res.status(200).json(card);
+  } catch (error) {
+    console.error("addCardDates error: ", error);
     next(error);
   }
 }

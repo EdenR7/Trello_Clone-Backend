@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  addCardDates,
   addMemberToArr,
   editCardTitle,
   getCard,
@@ -26,4 +27,8 @@ cardRouter.patch("/:cardId/editTitle", editCardTitle);
 cardRouter.post("/:cardId/member/add", addMemberToArr);
 cardRouter.delete("/:cardId/member/remove", removeMemberFromArr);
 
+//Date routes
+cardRouter.post("/:cardId/date/add", addCardDates); //send an empty object {} if we want to delete
+
+//Checklist routes
 export default cardRouter;
