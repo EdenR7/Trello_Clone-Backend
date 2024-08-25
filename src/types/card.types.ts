@@ -31,5 +31,6 @@ export interface CardI extends Document {
   activity: ActivitySubDocumentI[];
   checklist: ChecklistI[];
   position: number;
+  list: Types.ObjectId;
   isArchived: boolean;
 }
