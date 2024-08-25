@@ -194,7 +194,7 @@ export async function removeMemberFromArr(
   try {
     const member = await UserModel.findById(memberId);
     if (!member) {
-      throw new CustomError("Member not found", 404);
+      throw new CustomError("Memberr not found", 404);
     }
 
     const card = await CardModel.findById(cardId);
