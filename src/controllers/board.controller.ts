@@ -5,9 +5,17 @@ import { CustomError } from "../utils/errors/CustomError";
 import UserModel from "../models/user.model";
 import { startSession, Types } from "mongoose";
 import ListModel from "../models/list.model";
-import { AuthRequestWithBoard, BoardI } from "../types/board.types";
+import { BoardI } from "../types/board.types";
+import { ListI } from "../types/list.types";
+import {
+  addLabelToBoard,
+  reOrderListsPositions,
+  updateLabelOnBoard,
+} from "../utils/boardUtilFuncs";
+import { LabelI } from "../types/label.types";
+import CardModel from "../models/card.model";
 
-function VALIDATE_USER(req: AuthRequest) {
+export function VALIDATE_USER(req: AuthRequest) {
   return {
     $or: [
       { admin: (req as AuthRequest).userId },
@@ -33,7 +41,7 @@ async function addMembersDetails(board: any) {
 }
 
 export async function getBoard(
-  req: AuthRequestWithBoard,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
@@ -44,13 +52,11 @@ export async function getBoard(
     }).populate({
       path: "lists",
       model: "List",
+      options: { sort: { position: 1 } },
     });
     if (!board) throw new CustomError("Board not found", 404);
-    await addMembersDetails(board);
-
-    req.board = board;
-    next();
-    // res.status(200).json(board);
+    // await addMembersDetails(board);
+    res.status(200).json(board);
   } catch (error) {
     console.log("getBoard error: ");
     next(error);
@@ -69,9 +75,21 @@ export async function createBoard(
     const boardExists = await BoardModel.findOne({ name, admin: req.userId });
     if (boardExists) throw new CustomError("Board name already exists", 400);
 
-    const board = new BoardModel({ name, admin: req.userId });
+    const board = new BoardModel({
+      name,
+      admin: req.userId,
+      members: [req.userId],
+      labels: [
+        { title: "Default", color: "#61bd4f" },
+        { title: "Default", color: "#f2d600" },
+        { title: "Default", color: "#ff9f1a" },
+        { title: "Default", color: "#eb5a46" },
+        { title: "Default", color: "#c377e0" },
+        { title: "Default", color: "#0079bf" },
+      ],
+    });
     await board.save();
-    addMembersDetails(board);
+    // addMembersDetails(board);
     res.status(201).json(board);
   } catch (error) {
     console.log("createBoard error: ");
@@ -79,9 +97,27 @@ export async function createBoard(
   }
 }
 
+export async function deleteBoard(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const board = await BoardModel.findOneAndDelete({
+      _id: req.params.id,
+      admin: req.userId,
+    });
+    if (!board) throw new CustomError("Board not found", 404);
+    res.status(200).json({ message: "Board deleted" });
+  } catch (error) {
+    console.log("deleteBoard error: ");
+    next(error);
+  }
+}
+
 // still not using sortBoardLists
 export async function updateBoardBg(
-  req: AuthRequestWithBoard,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
@@ -254,7 +290,7 @@ export async function createList(
 }
 
 export async function archiveList(
-  req: AuthRequestWithBoard,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
@@ -277,14 +313,11 @@ export async function archiveList(
         $push: { archivedLists: { listId: listobjectId, name: list.name } },
       },
       { new: true, runValidators: true }
-    ).populate({
-      path: "lists",
-      model: "List",
-    });
+    );
     if (!board) throw new CustomError("Board not found", 404);
-    req.board = board;
-    next();
-    // res.status(200).json(board);
+    // req.board = board;
+    // next();
+    res.status(200).json(board);
   } catch (error) {
     console.log("archiveList error: ");
     next(error);
@@ -292,7 +325,7 @@ export async function archiveList(
 }
 
 export async function unArchiveList(
-  req: AuthRequestWithBoard,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
@@ -321,35 +354,79 @@ export async function unArchiveList(
     ).populate({
       path: "lists",
       model: "List",
+      options: { sort: { position: 1 } },
     });
     if (!board) throw new CustomError("Board not found", 404);
 
     await reOrderListsPositions(board);
+    const adjustedBoard = await BoardModel.findById(req.params.id).populate({
+      path: "lists",
+      model: "List",
+      options: { sort: { position: 1 } },
+    });
 
-    req.board = board;
-    next();
-    // res.status(200).json(board);
+    res.status(200).json(adjustedBoard);
   } catch (error) {
     console.log("unArchiveList error: ");
     next(error);
   }
 }
 
-export async function reOrderListsPositions(board: BoardI) {
+export async function createBoardLabel(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    if (!board.lists || board.lists.length === 0) return;
-    board.lists.sort((a: any, b: any) => a.position - b.position);
-
-    for (let idx = 0; idx < board.lists.length; idx++) {
-      const list = board.lists[idx];
-      const reMakeList = await ListModel.findByIdAndUpdate(
-        list._id,
-        { position: idx + 1 },
-        { new: true }
-      );
-      if (!reMakeList) throw new CustomError("List not found", 404);
-    }
+    const board = await addLabelToBoard(req, req.params.id);
+    if (!board) res.status(200).json({ message: "Label already exists" });
+    res.status(200).json(board);
   } catch (error) {
-    throw new CustomError("Error reordering lists", 500);
+    console.log("createBoardsLabel error: ");
+    next(error);
+  }
+}
+
+export async function updateBoardLabel(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { labelId, id } = req.params;
+  try {
+    const board = await updateLabelOnBoard(req, id, labelId);
+
+    res.status(200).json(board);
+  } catch (error) {
+    console.log("updateBoardLabel error: ");
+    next(error);
+  }
+}
+
+export async function deleteBoardLabel(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { labelId } = req.params;
+  try {
+    const board = await BoardModel.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        ...VALIDATE_USER(req),
+      },
+      { $pull: { labels: { _id: labelId } } },
+      { new: true }
+    );
+    if (!board) throw new CustomError("Board not found", 404);
+    // Delete from cards
+    await CardModel.updateMany(
+      { "labels._id": labelId },
+      { $pull: { labels: labelId } }
+    );
+    res.status(200).json(board);
+  } catch (error) {
+    console.log("deleteBoardLabel error: ");
+    next(error);
   }
 }
