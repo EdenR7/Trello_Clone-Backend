@@ -111,7 +111,7 @@ async function createWorkspace(name: string, admin: any) {
     const board = await createBoard(`Board ${i + 1}`, admin._id);
     boards.push({
       boardId: board._id,
-      title: board.name,
+      name: board.name,
       boardBg: board.bg,
     });
   }

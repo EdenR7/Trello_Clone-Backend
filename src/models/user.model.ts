@@ -50,17 +50,14 @@ const userSchema = new Schema<UserI>({
     type: [Schema.Types.ObjectId],
     default: [],
     ref: "Workspace",
-    required: true,
   },
   sttaredBoards: {
     type: [boardSubDocumentSchema],
     default: [],
-    required: true,
   },
   recentBoards: {
     type: [boardSubDocumentSchema],
     default: [],
-    required: true,
   },
 });
 

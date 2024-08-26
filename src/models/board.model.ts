@@ -11,7 +11,7 @@ export const boardSubDocumentSchema = new Schema<BoardSubDocumentI>({
     ref: "Board",
     required: true,
   },
-  title: {
+  name: {
     type: String,
     required: true,
   },
@@ -29,7 +29,7 @@ const boardSchema = new Schema<BoardI>({
   },
   bg: {
     type: String,
-    default: "",
+    default: "white",
   },
   members: {
     type: [Schema.Types.ObjectId],
@@ -43,6 +43,7 @@ const boardSchema = new Schema<BoardI>({
   },
   description: {
     type: String,
+    default: "",
   },
   name: {
     type: String,
