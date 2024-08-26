@@ -7,7 +7,7 @@ export interface BoardI extends Document {
   admin: Types.ObjectId;
   bg: string;
   members: Types.ObjectId[];
-  labels: LabelI[];
+  labels: Types.ObjectId[];
   description?: string;
   // activity: any[];
   name: string;

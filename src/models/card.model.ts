@@ -4,16 +4,7 @@ import { CardI, ChecklistI, TodoI } from "../types/card.types";
 import { memberSubDocumentSchema } from "./user.model";
 import { LabelI } from "../types/label.types";
 
-export const labelSchema = new Schema<LabelI>({
-  title: {
-    type: String,
-    required: true,
-  },
-  color: {
-    type: String,
-    required: true,
-  },
-});
+
 
 const todoSchema = new Schema<TodoI>({
   title: {
@@ -56,7 +47,8 @@ const cardSchema = new Schema<CardI>({
     required: true,
   },
   labels: {
-    type: [labelSchema],
+    type: [Schema.Types.ObjectId],
+    ref: "Label",
     default: [], // We can define default values for arrays
   },
   startDate: {

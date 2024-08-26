@@ -26,7 +26,7 @@ export interface CardI extends Document {
   };
   title: string;
   members: MemberSubDocumentI[];
-  labels: LabelI[];
+  labels: Types.ObjectId[];
   startDate?: Date;
   dueDate?: Date;
   description?: string;
