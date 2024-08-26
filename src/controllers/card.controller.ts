@@ -432,48 +432,34 @@ export async function toggleTodoComplete(
   }
 }
 
-export async function addLabelToCard(
+export async function toggleLabelOnCard(
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
   const { cardId } = req.params;
   const { labelId } = req.body;
-  try {
-    const card = await CardModel.findByIdAndUpdate(
-      cardId,
-      { $push: { labels: labelId } },
-      { new: true, runValidators: true }
-    );
-    if (!card) {
-      throw new CustomError("Card not found", 404);
-    }
-    res.status(200).json(card);
-  } catch (error) {
-    console.log("addTodo error: ", error);
-    next(error);
-  }
-}
 
-export async function removeLabelFromCard(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) {
-  const { cardId } = req.params;
-  const { labelId } = req.body;
   try {
-    const card = await CardModel.findByIdAndUpdate(
-      cardId,
-      { $pull: { labels: labelId } },
-      { new: true, runValidators: true }
-    );
+    const card = await CardModel.findById(cardId);
+
     if (!card) {
       throw new CustomError("Card not found", 404);
     }
+
+    const labelIndex = card.labels.indexOf(labelId);
+
+    if (labelIndex > -1) {
+      card.labels.splice(labelIndex, 1);
+    } else {
+      card.labels.push(labelId);
+    }
+
+    await card.save();
+
     res.status(200).json(card);
   } catch (error) {
-    console.log("addTodo error: ", error);
+    console.log("toggleLabelOnCard error: ", error);
     next(error);
   }
 }

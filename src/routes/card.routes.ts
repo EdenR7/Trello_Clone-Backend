@@ -9,6 +9,7 @@ import {
   removeChecklistFromArr,
   removeMemberFromArr,
   removeTodoFromArr,
+  toggleLabelOnCard,
   toggleTodoComplete,
   updateBgCoverColor,
   updateBgCoverState,
@@ -43,4 +44,8 @@ cardRouter.post("/:cardId/checklist/addTodo", addTodoToArr);
 cardRouter.delete("/:cardId/checklist/removeTodo", removeTodoFromArr);
 cardRouter.patch("/:cardId/checklist/updateTitle", updateTodoTitle);
 cardRouter.patch("/:cardId/checklist/toggleComplete", toggleTodoComplete);
+
+//Label routes
+cardRouter.patch("/:cardId/label/toggle", toggleLabelOnCard);
+
 export default cardRouter;

@@ -55,6 +55,7 @@ export async function getBoard(
       model: "List",
       options: { sort: { position: 1 } },
     });
+    console.log(board);
 
     if (!board) throw new CustomError("Board not found", 404);
     // await addMembersDetails(board);
