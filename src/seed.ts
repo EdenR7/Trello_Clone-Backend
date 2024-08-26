@@ -68,7 +68,12 @@ async function createCard(
   return card;
 }
 
-async function createList(name: string, adminId: any, position: number) {
+async function createList(
+  name: string,
+  adminId: any,
+  position: number,
+  boardId: Types.ObjectId
+) {
   const cards: any = [];
   const numOfCards = Math.floor(Math.random() * 4) + 1; // 1-4 cards
 
@@ -76,6 +81,7 @@ async function createList(name: string, adminId: any, position: number) {
     name,
     position,
     cards,
+    board: boardId,
   });
   for (let i = 0; i < numOfCards; i++) {
     const card = await createCard(`Card ${i + 1}`, adminId, i + 1, list._id);
@@ -87,21 +93,20 @@ async function createList(name: string, adminId: any, position: number) {
 }
 
 async function createBoard(name: string, adminId: any) {
-  const lists = [];
-
-  for (let i = 0; i < 3; i++) {
-    const list = await createList(`List ${i + 1}`, adminId, i + 1);
-    lists.push(list._id);
-  }
+  // const lists = [];
 
   const board = new BoardModel({
     admin: adminId,
     name,
     bg: "#ffffff", // Example background color
-    lists,
+    // lists,
   });
 
   await board.save();
+  for (let i = 0; i < 3; i++) {
+    const list = await createList(`List ${i + 1}`, adminId, i + 1, board._id);
+    // lists.push(list._id);
+  }
   return board;
 }
 

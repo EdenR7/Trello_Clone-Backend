@@ -1,4 +1,5 @@
-import { VALIDATE_USER } from "../controllers/board.controller";
+// import { VALIDATE_USER } from "../controllers/board.controller";
+import { Type } from "typescript";
 import BoardModel from "../models/board.model";
 import CardModel from "../models/card.model";
 import ListModel from "../models/list.model";
@@ -6,24 +7,26 @@ import { AuthRequest } from "../types/auth.types";
 import { BoardI } from "../types/board.types";
 import { LabelI } from "../types/label.types";
 import { CustomError } from "./errors/CustomError";
+import { Types } from "mongoose";
+import { ListI } from "../types/list.types";
 
-export async function reOrderListsPositions(board: BoardI) {
-  try {
-    if (!board.lists || board.lists.length === 0) return;
+// export async function reOrderListsPositions(board: BoardI) {
+//   try {
+//     if (!board.lists || board.lists.length === 0) return;
 
-    for (let idx = 0; idx < board.lists.length; idx++) {
-      const list = board.lists[idx];
-      const reMakeList = await ListModel.findByIdAndUpdate(
-        list._id,
-        { position: idx + 1 },
-        { new: true }
-      );
-      if (!reMakeList) throw new CustomError("List not found", 404);
-    }
-  } catch (error) {
-    throw new CustomError("Error reordering lists", 500);
-  }
-}
+//     for (let idx = 0; idx < board.lists.length; idx++) {
+//       const list = board.lists[idx];
+//       const reMakeList = await ListModel.findByIdAndUpdate(
+//         list._id,
+//         { position: idx + 1 },
+//         { new: true }
+//       );
+//       if (!reMakeList) throw new CustomError("List not found", 404);
+//     }
+//   } catch (error) {
+//     throw new CustomError("Error reordering lists", 500);
+//   }
+// }
 // export async function addLabelToBoard(req: AuthRequest, boardId: string) {
 //   const { title, color } = req.body;
 //   if (!title || !color)
@@ -88,3 +91,83 @@ export async function reOrderListsPositions(board: BoardI) {
 //     throw new CustomError("Error In updateLabelOnBoard", 500);
 //   }
 // }
+
+export function VALIDATE_USER(req: AuthRequest) {
+  return {
+    $or: [
+      { admin: (req as AuthRequest).userId },
+      { "members.memberId": req.userId },
+    ],
+  };
+}
+export async function reOrderListsPositions(
+  boardId: string | Types.ObjectId,
+  documentsToChange: number
+) {
+  try {
+    const lists = await ListModel.find({ board: boardId }).sort({
+      position: 1,
+    });
+    if (!lists) throw new Error();
+
+    const adjustedLists = [];
+
+    for (let idx = 0; idx < documentsToChange; idx++) {
+      const list = lists[idx];
+
+      const reMakeList = await ListModel.findByIdAndUpdate(
+        list._id,
+        { $set: { position: idx + 1 } },
+        { new: true }
+      );
+      // if (!reMakeList) throw new CustomError("List not found", 404);
+      adjustedLists.push(reMakeList);
+    }
+    return adjustedLists;
+  } catch (error) {
+    console.log("reOrderListsPositions error: ", error);
+    throw new CustomError("Error reordering lists", 500);
+  }
+}
+export async function addCardsToLists(sortedLists: ListI[]) {
+  try {
+    for (let list of sortedLists) {
+      (list as any).cards = await CardModel.find({
+        list: list._id,
+        isArchived: false,
+      }).sort({
+        position: 1,
+      });
+    }
+  } catch (error) {
+    throw new CustomError("Error adding cards to lists", 500);
+  }
+}
+export async function reOrderCardsPositions(
+  listId: string | Types.ObjectId,
+) {
+  try {
+    const cards = await CardModel.find({ list: listId }).sort({
+      position: 1,
+    });
+    if (!cards) throw new Error();
+
+    const adjustedCards = [];
+
+    for (let idx = 0; idx < cards.length; idx++) {
+      const card = cards[idx];
+
+      const reMakeCard = await CardModel.findByIdAndUpdate(
+        card._id,
+        { $set: { position: idx + 1 } },
+        { new: true }
+      );
+      // if (!reMakeCard) throw new CustomError("Card not found", 404);
+      adjustedCards.push(reMakeCard);
+    }
+    return adjustedCards;
+  } catch (error) {
+    console.log("reOrderCardsPositions error: ", error);
+    throw new CustomError("Error reordering cards", 500);
+  }
+}

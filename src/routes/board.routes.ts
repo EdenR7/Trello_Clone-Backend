@@ -1,15 +1,19 @@
 import { Router } from "express";
 import {
   addMember,
+  archiveCard,
   archiveList,
+  // archiveList,
   createBoard,
   createBoardLabel,
-  createList,
+  // createList,
   deleteBoard,
   deleteBoardLabel,
   getBoard,
   removeMember,
+  unArchiveCard,
   unArchiveList,
+  // unArchiveList,
   updateBoardBg,
   updateBoardLabel,
   updateDescription,
@@ -19,18 +23,20 @@ import { sortBoardLists } from "../middlewares/board.middleware";
 
 const boardRouter = Router();
 
-boardRouter.get("/:id", getBoard, sortBoardLists);
+boardRouter.get("/:id", getBoard);
 boardRouter.delete("/:id", deleteBoard);
 boardRouter.post("/", createBoard);
-boardRouter.patch("/:id/bg", updateBoardBg, sortBoardLists);
-boardRouter.patch("/:id/member/add", addMember, sortBoardLists);
-boardRouter.delete("/:id/member/remove", removeMember, sortBoardLists);
-boardRouter.patch("/:id/description", updateDescription, sortBoardLists);
-boardRouter.patch("/:id/name", updateName, sortBoardLists);
-boardRouter.post("/:id/list/create", createList);
-boardRouter.patch("/:id/list/:listId/archive", archiveList, sortBoardLists);
-boardRouter.patch("/:id/list/:listId/unarchive", unArchiveList, sortBoardLists);
-// archive and unarchive card
+boardRouter.patch("/:id/bg", updateBoardBg);
+boardRouter.patch("/:id/member/add", addMember);
+boardRouter.delete("/:id/member/remove", removeMember);
+boardRouter.patch("/:id/description", updateDescription);
+boardRouter.patch("/:id/name", updateName);
+
+boardRouter.patch("/:id/list/:listId/archive", archiveList);
+boardRouter.patch("/:id/list/:listId/unarchive", unArchiveList);
+boardRouter.patch("/:id/card/:cardId/archive", archiveCard);
+boardRouter.patch("/:id/card/:cardId/unarchive", unArchiveCard);
+// delete card
 
 boardRouter.post("/:id/label/add", createBoardLabel);
 boardRouter.patch("/:id/label/:labelId", updateBoardLabel);

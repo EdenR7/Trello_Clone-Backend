@@ -48,12 +48,12 @@ const boardSchema = new Schema<BoardI>({
     type: String,
     required: true,
   },
-  lists: {
-    type: [Schema.Types.ObjectId],
-    ref: "List",
-    default: [],
-    required: true,
-  },
+  // lists: {
+  //   type: [Schema.Types.ObjectId],
+  //   ref: "List",
+  //   default: [],
+  //   required: true,
+  // },
   archivedLists: {
     type: [
       new Schema(
@@ -70,6 +70,10 @@ const boardSchema = new Schema<BoardI>({
     type: [Schema.Types.ObjectId],
     ref: "Card",
     default: [],
+  },
+  listsNumber: {
+    type: Number,
+    default: 0,
   },
   // activity
 });
