@@ -14,6 +14,7 @@ import {
 } from "../utils/boardUtilFuncs";
 import { LabelI } from "../types/label.types";
 import CardModel from "../models/card.model";
+import { BoardSubDocumentI } from "../types/subDocument.types";
 
 export function VALIDATE_USER(req: AuthRequest) {
   return {
@@ -54,8 +55,35 @@ export async function getBoard(
       model: "List",
       options: { sort: { position: 1 } },
     });
+
     if (!board) throw new CustomError("Board not found", 404);
     // await addMembersDetails(board);
+    const user = await UserModel.findById(req.userId);
+    if (!user) throw new CustomError("User not found", 404);
+
+    const recBoardIndex = user.recentBoards.findIndex(
+      (b: BoardSubDocumentI) => b.boardId.toString() === board._id.toString()
+    );
+    if (recBoardIndex > -1) {
+      user.recentBoards.splice(recBoardIndex, 1);
+    }
+    await user.save();
+    await UserModel.findByIdAndUpdate(
+      req.userId,
+      {
+        $push: {
+          recentBoards: {
+            $each: [
+              { boardId: board._id, name: board.name, boardBg: board.bg },
+            ],
+            $position: 0,
+            $slice: 5,
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
     res.status(200).json(board);
   } catch (error) {
     console.log("getBoard error: ");

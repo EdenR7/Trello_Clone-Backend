@@ -11,5 +11,7 @@ export const errorHandler = (
   console.log(errorName, errorMessage);
   if (errorName === "CastError")
     return res.status(404).json({ message: errorMessage });
+  if (errorName === "ValidationError")
+    return res.status(401).json({ message: errorMessage });
   return res.status(statusCode).json({ message: errorMessage });
 };

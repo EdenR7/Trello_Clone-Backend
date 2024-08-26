@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 
 export interface BoardSubDocumentI {
   boardId: Types.ObjectId;
-  title: string;
+  name: string;
   boardBg: string;
 }
 export interface ActivitySubDocumentI {
