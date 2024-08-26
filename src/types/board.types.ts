@@ -11,9 +11,10 @@ export interface BoardI extends Document {
   description?: string;
   // activity: any[];
   name: string;
-  lists: Types.ObjectId[];
+  // lists: Types.ObjectId[];
   archivedLists: { listId: Types.ObjectId; name: string }[];
   archivedCards: Types.ObjectId[];
+  listsNumber: number;
 }
 
 export interface AuthRequestWithBoard extends AuthRequest {

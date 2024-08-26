@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createCard,
+  createList,
   getList,
   removeCard,
   updateName,
@@ -9,6 +10,7 @@ import {
 const listRouter = Router();
 
 //list routes
+listRouter.post("/:boardId", createList);
 listRouter.get("/:listId/", getList);
 listRouter.post("/:listId/", updateName);
 

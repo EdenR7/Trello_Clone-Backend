@@ -3,7 +3,53 @@ import { AuthRequest } from "../types/auth.types";
 import { CustomError } from "../utils/errors/CustomError";
 import CardModel from "../models/card.model";
 import ListModel from "../models/list.model";
-import mongoose, { Types } from "mongoose";
+import mongoose, { startSession, Types } from "mongoose";
+import BoardModel from "../models/board.model";
+import { VALIDATE_USER } from "../utils/boardUtilFuncs";
+
+export async function createList(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { boardId } = req.params;
+  const { name } = req.body;
+
+  if (!name) {
+    return next(new CustomError("Name is required", 400));
+  }
+  const session = await startSession();
+  try {
+    session.startTransaction();
+
+    const board = await BoardModel.findOneAndUpdate(
+      { _id: boardId, ...VALIDATE_USER(req) },
+      { $inc: { listsNumber: 1 } },
+      { session, new: true }
+    );
+
+    if (!board) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new CustomError("Board not found", 404);
+    }
+
+    const list = new ListModel({
+      name,
+      board: boardId,
+      position: board.listsNumber,
+    });
+    await list.save({ session });
+    await session.commitTransaction();
+
+    res.status(201).json(list);
+  } catch (error) {
+    console.error("createList error:", error);
+    next(error);
+  } finally {
+    session.endSession();
+  }
+}
 
 export async function getList(
   req: AuthRequest,
@@ -12,7 +58,11 @@ export async function getList(
 ) {
   const { listId } = req.params;
   try {
-    const list = await ListModel.findById(listId);
+    const list = await ListModel.findById(listId).populate({
+      path: "cards",
+      match: { isArchived: false },
+      options: { sort: { position: 1 } },
+    });
     if (!list) {
       throw new CustomError("List not found", 404);
     }
@@ -31,13 +81,12 @@ export async function createCard(
   const { listId } = req.params;
   const { title } = req.body;
 
-  if (!title) throw new CustomError("Title is required", 400);
-
-  // Start a session
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
+    if (!title) throw new CustomError("Title is required", 400);
+
     const newCardList = await ListModel.findById(listId).session(session);
     if (!newCardList) throw new CustomError("List not found", 404);
 
@@ -57,7 +106,6 @@ export async function createCard(
 
     // Commit the transaction
     await session.commitTransaction();
-    session.endSession();
 
     res.status(201).json(newCard);
   } catch (error) {
@@ -66,6 +114,8 @@ export async function createCard(
     session.endSession();
     console.error("Error in createCard function:", error);
     next(error);
+  } finally {
+    session.endSession();
   }
 }
 
@@ -103,12 +153,11 @@ export async function removeCard(
 
     res.status(200).json(list);
   } catch (error) {
-    if (session) {
-      await session.abortTransaction();
-      session.endSession();
-    }
+    await session.abortTransaction();
     console.error("deleteCard error:", error);
     next(error);
+  } finally {
+    session.endSession();
   }
 }
 

@@ -4,7 +4,7 @@ import { AuthRequest } from "../types/auth.types";
 import { CustomError } from "../utils/errors/CustomError";
 import BoardModel from "../models/board.model";
 import { Types } from "mongoose";
-import { VALIDATE_USER } from "./board.controller";
+import { VALIDATE_USER } from "../utils/boardUtilFuncs";
 
 export const getUser = async (
   req: AuthRequest,
@@ -13,7 +13,7 @@ export const getUser = async (
 ) => {
   try {
     const user = await UserModel.findById(req.userId).select("-password");
-    
+
     if (!user) {
       throw new CustomError("User not found", 404);
     }
@@ -67,7 +67,7 @@ export async function updateStarredBoards(
     } else {
       const board = await BoardModel.findOne({
         _id: boardId,
-        ...VALIDATE_USER,
+        ...VALIDATE_USER(req),
       });
       if (!board) {
         throw new CustomError("Board not found", 404);

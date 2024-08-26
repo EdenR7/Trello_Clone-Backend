@@ -5,41 +5,16 @@ import { CustomError } from "../utils/errors/CustomError";
 import UserModel from "../models/user.model";
 import { startSession, Types } from "mongoose";
 import ListModel from "../models/list.model";
-import { BoardI } from "../types/board.types";
-import { ListI } from "../types/list.types";
 import {
+  addCardsToLists,
+  reOrderCardsPositions,
   reOrderListsPositions,
-  // updateLabelOnBoard,
+  VALIDATE_USER,
 } from "../utils/boardUtilFuncs";
 import { LabelI } from "../types/label.types";
 import CardModel from "../models/card.model";
-import { BoardSubDocumentI } from "../types/subDocument.types";
 import LabelModel from "../models/label.model";
-
-export function VALIDATE_USER(req: AuthRequest) {
-  return {
-    $or: [
-      { admin: (req as AuthRequest).userId },
-      { "members.memberId": req.userId },
-    ],
-  };
-}
-async function addMembersDetails(board: any) {
-  board.membersDetails = [];
-  await Promise.all(
-    board.members.map(async (member: any, idx: number) => {
-      const user = await UserModel.findById(member.memberId);
-      if (user) {
-        board.membersDetails[idx] = {
-          memberId: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          username: user.username,
-        };
-      }
-    })
-  );
-}
+import { ListI } from "../types/list.types";
 
 export async function getBoard(
   req: AuthRequest,
@@ -50,25 +25,29 @@ export async function getBoard(
     const board = await BoardModel.findOne({
       _id: req.params.id,
       ...VALIDATE_USER(req),
-    }).populate({
-      path: "lists",
-      model: "List",
-      options: { sort: { position: 1 } },
     });
-    console.log(board);
-
     if (!board) throw new CustomError("Board not found", 404);
-    // await addMembersDetails(board);
-    const user = await UserModel.findById(req.userId);
-    if (!user) throw new CustomError("User not found", 404);
 
-    const recBoardIndex = user.recentBoards.findIndex(
-      (b: BoardSubDocumentI) => b.boardId.toString() === board._id.toString()
-    );
-    if (recBoardIndex > -1) {
-      user.recentBoards.splice(recBoardIndex, 1);
-    }
-    await user.save();
+    const [lists, user] = await Promise.all([
+      ListModel.find({ board: board._id, isArchived: false }).sort({
+        position: 1,
+      }),
+      // update recentBoards
+      UserModel.findByIdAndUpdate(
+        req.userId,
+        {
+          $pull: { recentBoards: { boardId: board._id } },
+        },
+        { new: true }
+      ),
+    ]);
+
+    if (!lists) throw new CustomError("Lists not found", 404);
+    // populate the cards manually
+    await addCardsToLists(lists);
+
+    if (!user) throw new CustomError("User not found", 404);
+    // update recentBoards
     await UserModel.findByIdAndUpdate(
       req.userId,
       {
@@ -78,14 +57,14 @@ export async function getBoard(
               { boardId: board._id, name: board.name, boardBg: board.bg },
             ],
             $position: 0,
-            $slice: 5,
+            $slice: 7,
           },
         },
       },
       { new: true, runValidators: true }
     );
 
-    res.status(200).json(board);
+    res.status(200).json({ board, lists });
   } catch (error) {
     console.log("getBoard error: ");
     next(error);
@@ -116,7 +95,6 @@ export async function createBoard(
       labels: [...defaultLabelsIds],
     });
     await board.save();
-    // addMembersDetails(board);
     res.status(201).json(board);
   } catch (error) {
     console.log("createBoard error: ");
@@ -142,7 +120,6 @@ export async function deleteBoard(
   }
 }
 
-// still not using sortBoardLists
 export async function updateBoardBg(
   req: AuthRequest,
   res: Response,
@@ -160,14 +137,12 @@ export async function updateBoardBg(
       { new: true }
     );
     if (!board) throw new CustomError("Board not found", 404);
-    addMembersDetails(board);
     res.status(200).json(board);
   } catch (error) {
     console.log("updateBoardBg error: ");
     next(error);
   }
 }
-// still not using sortBoardLists
 
 export async function addMember(
   req: AuthRequest,
@@ -200,7 +175,6 @@ export async function addMember(
     next(error);
   }
 }
-// still not using sortBoardLists
 
 export async function removeMember(
   req: AuthRequest,
@@ -233,7 +207,6 @@ export async function removeMember(
     next(error);
   }
 }
-// still not using sortBoardLists
 
 export async function updateDescription(
   req: AuthRequest,
@@ -259,7 +232,7 @@ export async function updateDescription(
     next(error);
   }
 }
-// still not using sortBoardLists
+
 export async function updateName(
   req: AuthRequest,
   res: Response,
@@ -283,38 +256,6 @@ export async function updateName(
     next(error);
   }
 }
-// still not using sortBoardLists
-export async function createList(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) {
-  const { id } = req.params;
-  const { name } = req.body;
-  const session = await startSession();
-  session.startTransaction();
-  try {
-    const board = await BoardModel.findById(id).session(session);
-    if (!board) throw new CustomError("Board not found", 404);
-
-    const listPosition = board.lists.length + 1;
-    const newList = await ListModel.create([{ name, position: listPosition }], {
-      session,
-    });
-
-    console.log("newList: ", newList);
-
-    board.lists.push(newList[0]._id);
-    await board.save({ session });
-    await session.commitTransaction();
-    session.endSession();
-    res.status(201).json(newList[0]);
-  } catch (error) {
-    session.endSession();
-    console.log("createList error: ");
-    next(error);
-  }
-}
 
 export async function archiveList(
   req: AuthRequest,
@@ -322,32 +263,50 @@ export async function archiveList(
   next: NextFunction
 ) {
   const { listId } = req.params;
-
   const listobjectId = new Types.ObjectId(listId);
-
+  const session = await startSession();
   try {
-    const list = await ListModel.findById(listobjectId);
+    session.startTransaction();
+    const list = await ListModel.findOneAndUpdate(
+      { _id: listId, board: req.params.id, isArchived: false },
+      { $set: { isArchived: true } },
+      { new: true, session }
+    );
     if (!list) throw new CustomError("List not found", 404);
 
     const board = await BoardModel.findOneAndUpdate(
       {
         _id: req.params.id,
-        lists: listId,
         ...VALIDATE_USER(req),
       },
       {
-        $pull: { lists: listobjectId },
+        $inc: { listsNumber: -1 },
         $push: { archivedLists: { listId: listobjectId, name: list.name } },
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, session }
     );
     if (!board) throw new CustomError("Board not found", 404);
-    // req.board = board;
-    // next();
-    res.status(200).json(board);
+
+    const lists = await ListModel.find({
+      board: board._id,
+      isArchived: false,
+      _id: { $ne: listId },
+    }).sort({
+      position: 1,
+    });
+    if (!lists) throw new CustomError("Lists not found", 404);
+
+    await addCardsToLists(lists);
+
+    await session.commitTransaction();
+
+    res.status(200).json({ board, lists });
   } catch (error) {
+    await session.abortTransaction();
     console.log("archiveList error: ");
     next(error);
+  } finally {
+    session.endSession();
   }
 }
 
@@ -358,44 +317,152 @@ export async function unArchiveList(
 ) {
   const { listId } = req.params;
   const listobjectId = new Types.ObjectId(listId);
-
+  const session = await startSession();
   try {
-    const newPosition = 10000;
-    await ListModel.findByIdAndUpdate(
-      listobjectId,
-      { position: newPosition },
-      { new: true }
-    );
-
+    session.startTransaction();
     const board = await BoardModel.findOneAndUpdate(
       {
         _id: req.params.id,
-        "archivedLists.listId": listobjectId,
         ...VALIDATE_USER(req),
       },
       {
+        $inc: { listsNumber: 1 },
         $pull: { archivedLists: { listId: listobjectId } },
         $push: { lists: listobjectId },
       },
-      { new: true, runValidators: true }
-    ).populate({
-      path: "lists",
-      model: "List",
-      options: { sort: { position: 1 } },
-    });
+      { new: true, runValidators: true, session }
+    );
     if (!board) throw new CustomError("Board not found", 404);
+    const list = await ListModel.findOneAndUpdate(
+      { _id: listId, board: req.params.id, isArchived: true },
+      { $set: { isArchived: false, position: board.listsNumber + 100 } },
+      { new: true, session }
+    );
 
-    await reOrderListsPositions(board);
-    const adjustedBoard = await BoardModel.findById(req.params.id).populate({
-      path: "lists",
-      model: "List",
-      options: { sort: { position: 1 } },
-    });
+    if (!list) throw new CustomError("List not found", 404);
 
-    res.status(200).json(adjustedBoard);
+    await session.commitTransaction();
+    const lists = await reOrderListsPositions(board._id, board.listsNumber);
+    if (!lists) throw new CustomError("Lists not found", 404);
+    await addCardsToLists(lists as ListI[]);
+
+    res.status(200).json({ board, lists });
   } catch (error) {
+    await session.abortTransaction();
     console.log("unArchiveList error: ");
     next(error);
+  } finally {
+    session.endSession();
+  }
+}
+
+export async function archiveCard(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { id, cardId } = req.params;
+  console.log("id: ", cardId);
+
+  const cardObjectId = new Types.ObjectId(cardId);
+  const session = await startSession();
+  try {
+    session.startTransaction();
+
+    const card = await CardModel.findOneAndUpdate(
+      { _id: cardId, isArchived: false },
+      { $set: { isArchived: true } },
+      { new: true, session }
+    );
+    if (!card) throw new CustomError("Card not found", 404);
+
+    const board = await BoardModel.findOneAndUpdate(
+      {
+        _id: id,
+        ...VALIDATE_USER(req),
+      },
+      {
+        $push: { archivedCards: cardObjectId },
+      },
+      { new: true, runValidators: true, session }
+    );
+
+    if (!board) throw new CustomError("Board not found", 404);
+
+    const lists = await ListModel.find({
+      board: board._id,
+      isArchived: false,
+    }).sort({
+      position: 1,
+    });
+
+    if (!lists) throw new CustomError("Lists not found", 404);
+
+    await session.commitTransaction();
+    await addCardsToLists(lists);
+
+    res.status(200).json({ board, lists });
+  } catch (error) {
+    await session.abortTransaction();
+    console.log("archiveCard error: ");
+    next(error);
+  } finally {
+    session.endSession();
+  }
+}
+
+export async function unArchiveCard(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { id, cardId } = req.params;
+  const cardObjectId = new Types.ObjectId(cardId);
+  const session = await startSession();
+  try {
+    session.startTransaction();
+    const board = await BoardModel.findOneAndUpdate(
+      {
+        _id: id,
+        ...VALIDATE_USER(req),
+      },
+      {
+        $pull: { archivedCards: cardObjectId },
+      },
+      { new: true, runValidators: true, session }
+    );
+    if (!board) throw new CustomError("Board not found", 404);
+
+    const card = await CardModel.findOneAndUpdate(
+      { _id: cardId, isArchived: true },
+      { $set: { isArchived: false, position: 10000 } },
+      { new: true, session }
+    );
+    if (!card) throw new CustomError("Card not found", 404);
+
+    await session.commitTransaction();
+
+    const cardsList = await ListModel.findById(card.list);
+    if (!cardsList) throw new CustomError("List not found", 404);
+
+    await reOrderCardsPositions(cardsList._id);
+    const lists = await ListModel.find({
+      board: board._id,
+      isArchived: false,
+    }).sort({
+      position: 1,
+    });
+    if (!lists) throw new CustomError("Lists not found", 404);
+
+    await addCardsToLists(lists);
+
+    res.status(200).json({ board, lists });
+  } catch (error) {
+    await session.abortTransaction();
+    console.log("unArchiveCard error: ");
+    next(error);
+  } finally {
+    session.endSession();
   }
 }
 
@@ -439,6 +506,7 @@ export async function updateBoardLabel(
     await LabelModel.findByIdAndUpdate(req.params.labelId, {
       $set: updateFields,
     });
+
     res.status(200).json({ message: "Label updated" });
     // res.status(200).json(board);
   } catch (error) {
