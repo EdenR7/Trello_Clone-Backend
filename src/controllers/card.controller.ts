@@ -2,7 +2,6 @@ import { NextFunction, Response } from "express";
 import { AuthRequest } from "../types/auth.types";
 import CardModel from "../models/card.model";
 import { CustomError } from "../utils/errors/CustomError";
-import ListModel from "../models/list.model";
 import UserModel from "../models/user.model";
 
 export async function getCard(
@@ -432,3 +431,20 @@ export async function toggleTodoComplete(
     next(error);
   }
 }
+
+export async function addLabelToCard( req: AuthRequest,
+  res: Response,
+  next: NextFunction){
+    const {cardId} = req.params
+    const {labelId} = req.body
+    try {
+      const card = await CardModel.findByIdAndUpdate(cardId, {$push: {"card.labels": labelId}}, {new: true, runValidators: true})
+      if(!card){
+        throw new CustomError("Card not found", 404);
+      }
+      res.status(200).json(card)
+    } catch (error) {
+      console.log("addTodo error: ", error);
+    next(error);
+    }
+  }
