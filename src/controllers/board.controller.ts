@@ -8,13 +8,13 @@ import ListModel from "../models/list.model";
 import { BoardI } from "../types/board.types";
 import { ListI } from "../types/list.types";
 import {
-  addLabelToBoard,
   reOrderListsPositions,
-  updateLabelOnBoard,
+  // updateLabelOnBoard,
 } from "../utils/boardUtilFuncs";
 import { LabelI } from "../types/label.types";
 import CardModel from "../models/card.model";
 import { BoardSubDocumentI } from "../types/subDocument.types";
+import LabelModel from "../models/label.model";
 
 export function VALIDATE_USER(req: AuthRequest) {
   return {
@@ -103,18 +103,16 @@ export async function createBoard(
     const boardExists = await BoardModel.findOne({ name, admin: req.userId });
     if (boardExists) throw new CustomError("Board name already exists", 400);
 
+    const defaultLabels: LabelI[] = await LabelModel.find({ title: "Default" });
+    if (!defaultLabels || !defaultLabels.length)
+      throw new CustomError("Default Labels not found", 404);
+    const defaultLabelsIds = defaultLabels.map((label: LabelI) => label._id);
+
     const board = new BoardModel({
       name,
       admin: req.userId,
       members: [req.userId],
-      labels: [
-        { title: "Default", color: "#61bd4f" },
-        { title: "Default", color: "#f2d600" },
-        { title: "Default", color: "#ff9f1a" },
-        { title: "Default", color: "#eb5a46" },
-        { title: "Default", color: "#c377e0" },
-        { title: "Default", color: "#0079bf" },
-      ],
+      labels: [...defaultLabelsIds],
     });
     await board.save();
     // addMembersDetails(board);
@@ -406,8 +404,16 @@ export async function createBoardLabel(
   next: NextFunction
 ) {
   try {
-    const board = await addLabelToBoard(req, req.params.id);
-    if (!board) res.status(200).json({ message: "Label already exists" });
+    const { title, color } = req.body;
+    const label = new LabelModel({ title, color });
+    await label.save();
+
+    const board = await BoardModel.findOneAndUpdate(
+      { _id: req.params.id, ...VALIDATE_USER(req) },
+      { $push: { labels: label._id } },
+      { new: true }
+    );
+    if (!board) throw new CustomError("Board not found", 404);
     res.status(200).json(board);
   } catch (error) {
     console.log("createBoardsLabel error: ");
@@ -421,10 +427,19 @@ export async function updateBoardLabel(
   next: NextFunction
 ) {
   const { labelId, id } = req.params;
+  const { title, color } = req.body;
+  if (!title || !color)
+    throw new CustomError("title and color are required", 400);
   try {
-    const board = await updateLabelOnBoard(req, id, labelId);
+    const updateFields: any = {};
+    if (title) updateFields["label.$.title"] = title;
+    if (color) updateFields["label.$.color"] = color;
 
-    res.status(200).json(board);
+    await LabelModel.findByIdAndUpdate(req.params.labelId, {
+      $set: updateFields,
+    });
+    res.status(200).json({ message: "Label updated" });
+    // res.status(200).json(board);
   } catch (error) {
     console.log("updateBoardLabel error: ");
     next(error);

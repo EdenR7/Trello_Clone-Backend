@@ -7,6 +7,7 @@ import WorkspaceModel from "./models/workspace.model";
 import BoardModel from "./models/board.model";
 import ListModel from "./models/list.model";
 import CardModel from "./models/card.model";
+import LabelModel from "./models/label.model";
 
 const SALT_ROUNDS = 10;
 
@@ -136,6 +137,24 @@ async function createWorkspace(name: string, admin: any) {
   return workspace;
 }
 
+async function createLabels() {
+  const labels = [
+    { title: "Default", color: "#61bd4f" },
+    { title: "Default", color: "#f2d600" },
+    { title: "Default", color: "#ff9f1a" },
+    { title: "Default", color: "#eb5a46" },
+    { title: "Default", color: "#c377e0" },
+    { title: "Default", color: "#0079bf" },
+  ];
+
+  await Promise.all(
+    labels.map(async (label) => {
+      const newLabel = new LabelModel(label);
+      await newLabel.save();
+    })
+  );
+}
+
 async function seedDB() {
   try {
     await connectDB();
@@ -146,8 +165,12 @@ async function seedDB() {
     await BoardModel.deleteMany({});
     await ListModel.deleteMany({});
     await CardModel.deleteMany({});
+    await LabelModel.deleteMany({});
 
     // Create users and their associated data
+
+    await createLabels();
+
     const createdUsers = await Promise.all(
       users.map(async (u) => {
         const hashedPassword = await bcrypt.hash(u.password, SALT_ROUNDS);
