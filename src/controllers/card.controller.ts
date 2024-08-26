@@ -432,19 +432,48 @@ export async function toggleTodoComplete(
   }
 }
 
-export async function addLabelToCard( req: AuthRequest,
+export async function addLabelToCard(
+  req: AuthRequest,
   res: Response,
-  next: NextFunction){
-    const {cardId} = req.params
-    const {labelId} = req.body
-    try {
-      const card = await CardModel.findByIdAndUpdate(cardId, {$push: {"card.labels": labelId}}, {new: true, runValidators: true})
-      if(!card){
-        throw new CustomError("Card not found", 404);
-      }
-      res.status(200).json(card)
-    } catch (error) {
-      console.log("addTodo error: ", error);
-    next(error);
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { labelId } = req.body;
+  try {
+    const card = await CardModel.findByIdAndUpdate(
+      cardId,
+      { $push: { labels: labelId } },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
     }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addTodo error: ", error);
+    next(error);
   }
+}
+
+export async function removeLabelFromCard(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { labelId } = req.body;
+  try {
+    const card = await CardModel.findByIdAndUpdate(
+      cardId,
+      { $pull: { labels: labelId } },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("addTodo error: ", error);
+    next(error);
+  }
+}

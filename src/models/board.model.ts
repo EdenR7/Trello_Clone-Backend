@@ -1,9 +1,7 @@
 import { model, Schema } from "mongoose";
 import { BoardSubDocumentI } from "../types/subDocument.types";
-import { LabelI } from "../types/label.types";
 import { memberSubDocumentSchema } from "./user.model";
 import { BoardI } from "../types/board.types";
-import { labelSchema } from "./card.model";
 
 export const boardSubDocumentSchema = new Schema<BoardSubDocumentI>({
   boardId: {
@@ -38,8 +36,9 @@ const boardSchema = new Schema<BoardI>({
     required: true,
   },
   labels: {
-    type: [labelSchema],
-    default: [],
+    type: [Schema.Types.ObjectId],
+    ref: "Label",
+    default: [], // We can define default values for arrays
   },
   description: {
     type: String,
