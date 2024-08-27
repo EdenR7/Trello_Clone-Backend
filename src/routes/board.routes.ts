@@ -38,7 +38,7 @@ boardRouter.patch("/:id/card/:cardId/archive", archiveCard);
 boardRouter.patch("/:id/card/:cardId/unarchive", unArchiveCard);
 // delete card
 
-boardRouter.post("/:id/label/add", createBoardLabel);
+boardRouter.post("/:id/label", createBoardLabel);
 boardRouter.patch("/:id/label/:labelId", updateBoardLabel);
 boardRouter.delete("/:id/label/:labelId", deleteBoardLabel); // also delete from cards
 

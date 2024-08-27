@@ -7,6 +7,7 @@ import mongoose, { startSession, Types } from "mongoose";
 import BoardModel from "../models/board.model";
 import { VALIDATE_USER } from "../utils/boardUtilFuncs";
 
+
 export async function createList(
   req: AuthRequest,
   res: Response,
@@ -48,6 +49,28 @@ export async function createList(
     next(error);
   } finally {
     session.endSession();
+  }
+}
+
+export async function getBoardsLists(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { boardId } = req.params;
+  try {
+    const lists = await ListModel.find({ board: boardId })
+      .populate({
+        path: "cards",
+        match: { isArchived: false },
+        options: { sort: { position: 1 } },
+      })
+      .sort({ position: 1 });
+    if (!lists) throw new CustomError("Lists not found", 404);
+    return res.status(200).json(lists);
+  } catch (error) {
+    console.log("getBoardsLists error: ");
+    next(error);
   }
 }
 

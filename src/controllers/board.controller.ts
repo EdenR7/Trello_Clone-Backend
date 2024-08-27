@@ -342,6 +342,7 @@ export async function unArchiveList(
     if (!list) throw new CustomError("List not found", 404);
 
     await session.commitTransaction();
+    
     const lists = await reOrderListsPositions(board._id, board.listsNumber);
     if (!lists) throw new CustomError("Lists not found", 404);
     await addCardsToLists(lists as ListI[]);
@@ -481,6 +482,7 @@ export async function createBoardLabel(
       { $push: { labels: label._id } },
       { new: true }
     );
+
     if (!board) throw new CustomError("Board not found", 404);
     res.status(200).json(board);
   } catch (error) {
@@ -494,7 +496,7 @@ export async function updateBoardLabel(
   res: Response,
   next: NextFunction
 ) {
-  const { labelId, id } = req.params;
+  const { labelId } = req.params;
   const { title, color } = req.body;
   if (!title || !color)
     throw new CustomError("title and color are required", 400);
@@ -503,7 +505,7 @@ export async function updateBoardLabel(
     if (title) updateFields["label.$.title"] = title;
     if (color) updateFields["label.$.color"] = color;
 
-    await LabelModel.findByIdAndUpdate(req.params.labelId, {
+    await LabelModel.findByIdAndUpdate(labelId, {
       $set: updateFields,
     });
 
@@ -522,21 +524,38 @@ export async function deleteBoardLabel(
 ) {
   const { labelId } = req.params;
   try {
-    const board = await BoardModel.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        ...VALIDATE_USER(req),
-      },
-      { $pull: { labels: { _id: labelId } } },
-      { new: true }
-    );
-    if (!board) throw new CustomError("Board not found", 404);
-    // Delete from cards
-    await CardModel.updateMany(
-      { "labels._id": labelId },
-      { $pull: { labels: labelId } }
-    );
-    res.status(200).json(board);
+    const [updatedBoard] = await Promise.all([
+      BoardModel.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          ...VALIDATE_USER(req),
+        },
+        { $pull: { labels: labelId } },
+        { new: true }
+      ),
+      CardModel.updateMany(
+        { "labels._id": labelId },
+        { $pull: { labels: labelId } }
+      ),
+      LabelModel.findByIdAndDelete(labelId),
+    ]);
+    if (!updatedBoard) throw new CustomError("Board not found", 404);
+
+    // const board = await BoardModel.findOneAndUpdate(
+    //   {
+    //     _id: req.params.id,
+    //     ...VALIDATE_USER(req),
+    //   },
+    //   { $pull: { labels: labelId  } },
+    //   { new: true }
+    // );
+    // if (!board) throw new CustomError("Board not found", 404);
+    // // Delete from cards
+    // await CardModel.updateMany(
+    //   { "labels._id": labelId },
+    //   { $pull: { labels: labelId } }
+    // );
+    res.status(200).json(updatedBoard);
   } catch (error) {
     console.log("deleteBoardLabel error: ");
     next(error);
