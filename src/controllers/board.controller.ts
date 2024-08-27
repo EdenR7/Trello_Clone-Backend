@@ -28,23 +28,32 @@ export async function getBoard(
     });
     if (!board) throw new CustomError("Board not found", 404);
 
-    const [lists, user] = await Promise.all([
-      ListModel.find({ board: board._id, isArchived: false }).sort({
-        position: 1,
-      }),
-      // update recentBoards
-      UserModel.findByIdAndUpdate(
-        req.userId,
-        {
-          $pull: { recentBoards: { boardId: board._id } },
-        },
-        { new: true }
-      ),
-    ]);
+    // const [lists, user] = await Promise.all([
+    //   ListModel.find({ board: board._id, isArchived: false }).sort({
+    //     position: 1,
+    //   }),
+    //   // update recentBoards
+    //   UserModel.findByIdAndUpdate(
+    //     req.userId,
+    //     {
+    //       $pull: { recentBoards: { boardId: board._id } },
+    //     },
+    //     { new: true }
+    //   ),
+    // ]);
 
-    if (!lists) throw new CustomError("Lists not found", 404);
-    // populate the cards manually
-    await addCardsToLists(lists);
+    // if (!lists) throw new CustomError("Lists not found", 404);
+
+    // // populate the cards manually
+    // await addCardsToLists(lists);
+
+    const user = await UserModel.findByIdAndUpdate(
+      req.userId,
+      {
+        $pull: { recentBoards: { boardId: board._id } },
+      },
+      { new: true }
+    );
 
     if (!user) throw new CustomError("User not found", 404);
     // update recentBoards
@@ -64,7 +73,7 @@ export async function getBoard(
       { new: true, runValidators: true }
     );
 
-    res.status(200).json({ board, lists });
+    res.status(200).json(board);
   } catch (error) {
     console.log("getBoard error: ");
     next(error);
@@ -287,20 +296,20 @@ export async function archiveList(
     );
     if (!board) throw new CustomError("Board not found", 404);
 
-    const lists = await ListModel.find({
-      board: board._id,
-      isArchived: false,
-      _id: { $ne: listId },
-    }).sort({
-      position: 1,
-    });
-    if (!lists) throw new CustomError("Lists not found", 404);
+    // const lists = await ListModel.find({
+    //   board: board._id,
+    //   isArchived: false,
+    //   _id: { $ne: listId },
+    // }).sort({
+    //   position: 1,
+    // });
+    // if (!lists) throw new CustomError("Lists not found", 404);
 
-    await addCardsToLists(lists);
+    // await addCardsToLists(lists);
 
     await session.commitTransaction();
 
-    res.status(200).json({ board, lists });
+    res.status(200).json(board);
   } catch (error) {
     await session.abortTransaction();
     console.log("archiveList error: ");
@@ -328,26 +337,34 @@ export async function unArchiveList(
       {
         $inc: { listsNumber: 1 },
         $pull: { archivedLists: { listId: listobjectId } },
-        $push: { lists: listobjectId },
       },
       { new: true, runValidators: true, session }
     );
     if (!board) throw new CustomError("Board not found", 404);
-    const list = await ListModel.findOneAndUpdate(
+
+    const lists = await ListModel.find({
+      board: board._id,
+      isArchived: false,
+    });
+    if (!lists) throw new CustomError("Lists not found", 404);
+
+    let maxPos = 0;
+    lists.forEach((list) => {
+      if (list.position > maxPos) maxPos = list.position;
+    });
+
+    await ListModel.findOneAndUpdate(
       { _id: listId, board: req.params.id, isArchived: true },
-      { $set: { isArchived: false, position: board.listsNumber + 100 } },
+      { $set: { isArchived: false, position: Math.floor(maxPos + 1) } },
       { new: true, session }
     );
-
-    if (!list) throw new CustomError("List not found", 404);
-
     await session.commitTransaction();
-    
-    const lists = await reOrderListsPositions(board._id, board.listsNumber);
-    if (!lists) throw new CustomError("Lists not found", 404);
-    await addCardsToLists(lists as ListI[]);
 
-    res.status(200).json({ board, lists });
+    // const lists = await reOrderListsPositions(board._id, board.listsNumber);
+    // if (!lists) throw new CustomError("Lists not found", 404);
+    // await addCardsToLists(lists as ListI[]);
+
+    res.status(200).json(board);
   } catch (error) {
     await session.abortTransaction();
     console.log("unArchiveList error: ");
@@ -363,7 +380,6 @@ export async function archiveCard(
   next: NextFunction
 ) {
   const { id, cardId } = req.params;
-  console.log("id: ", cardId);
 
   const cardObjectId = new Types.ObjectId(cardId);
   const session = await startSession();
@@ -390,19 +406,19 @@ export async function archiveCard(
 
     if (!board) throw new CustomError("Board not found", 404);
 
-    const lists = await ListModel.find({
-      board: board._id,
-      isArchived: false,
-    }).sort({
-      position: 1,
-    });
+    // const lists = await ListModel.find({
+    //   board: board._id,
+    //   isArchived: false,
+    // }).sort({
+    //   position: 1,
+    // });
 
-    if (!lists) throw new CustomError("Lists not found", 404);
+    // if (!lists) throw new CustomError("Lists not found", 404);
 
     await session.commitTransaction();
-    await addCardsToLists(lists);
+    // await addCardsToLists(lists);
 
-    res.status(200).json({ board, lists });
+    res.status(200).json(board);
   } catch (error) {
     await session.abortTransaction();
     console.log("archiveCard error: ");
@@ -434,30 +450,47 @@ export async function unArchiveCard(
     );
     if (!board) throw new CustomError("Board not found", 404);
 
-    const card = await CardModel.findOneAndUpdate(
-      { _id: cardId, isArchived: true },
-      { $set: { isArchived: false, position: 10000 } },
-      { new: true, session }
-    );
-    if (!card) throw new CustomError("Card not found", 404);
+    const cardd = await CardModel.findById(cardId);
+    if (!cardd) throw new CustomError("Card not found", 404);
+
+    const cards = await CardModel.find({
+      list: cardd.list,
+      isArchived: false,
+    });
+
+    let maxPos = 0;
+    cards.forEach((card) => {
+      if (card.position > maxPos) maxPos = card.position;
+    });
+
+    cardd.isArchived = false;
+    cardd.position = Math.floor(maxPos + 1);
+    await cardd.save();
+
+    // const card = await CardModel.findOneAndUpdate(
+    //   { _id: cardId, isArchived: true },
+    //   { $set: { isArchived: false, position: 10000 } },
+    //   { new: true, session }
+    // );
+    // if (!card) throw new CustomError("Card not found", 404);
 
     await session.commitTransaction();
 
-    const cardsList = await ListModel.findById(card.list);
-    if (!cardsList) throw new CustomError("List not found", 404);
+    // const cardsList = await ListModel.findById(card.list);
+    // if (!cardsList) throw new CustomError("List not found", 404);
 
-    await reOrderCardsPositions(cardsList._id);
-    const lists = await ListModel.find({
-      board: board._id,
-      isArchived: false,
-    }).sort({
-      position: 1,
-    });
-    if (!lists) throw new CustomError("Lists not found", 404);
+    // await reOrderCardsPositions(cardsList._id);
+    // const lists = await ListModel.find({
+    //   board: board._id,
+    //   isArchived: false,
+    // }).sort({
+    //   position: 1,
+    // });
+    // if (!lists) throw new CustomError("Lists not found", 404);
 
-    await addCardsToLists(lists);
+    // await addCardsToLists(lists);
 
-    res.status(200).json({ board, lists });
+    res.status(200).json(board);
   } catch (error) {
     await session.abortTransaction();
     console.log("unArchiveCard error: ");
