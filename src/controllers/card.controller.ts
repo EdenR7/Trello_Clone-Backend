@@ -150,8 +150,13 @@ export async function addMemberToArr(
         .status(400)
         .json({ message: "Member is already added to this card." });
     }
-
-    card.members.push(memberId);
+    const memberToAdd = {
+      memberId,
+      username: member.username,
+      firstName: member.firstName,
+      lastName: member.lastName,
+    };
+    card.members.push(memberToAdd);
     await card.save();
 
     res.status(200).json(card);
