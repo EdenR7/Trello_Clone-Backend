@@ -12,7 +12,7 @@ export async function getCard(
   const { cardId } = req.params;
 
   try {
-    const card = await CardModel.findById(cardId);
+    const card = await CardModel.findById(cardId).populate("list");
     if (!card) throw new CustomError("Card not found", 404);
     res.status(200).json(card);
   } catch (error) {
