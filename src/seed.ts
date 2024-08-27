@@ -8,6 +8,8 @@ import BoardModel from "./models/board.model";
 import ListModel from "./models/list.model";
 import CardModel from "./models/card.model";
 import LabelModel from "./models/label.model";
+import { LabelI } from "./types/label.types";
+import { CustomError } from "./utils/errors/CustomError";
 
 const SALT_ROUNDS = 10;
 
@@ -94,11 +96,17 @@ async function createList(
 
 async function createBoard(name: string, adminId: any) {
   // const lists = [];
+  const defaultLabels: LabelI[] = await LabelModel.find({ title: "Default" });
+  if (!defaultLabels || !defaultLabels.length)
+    throw new CustomError("Default Labels not found", 404);
+  const defaultLabelsIds = defaultLabels.map((label: LabelI) => label._id);
 
   const board = new BoardModel({
     admin: adminId,
     name,
     bg: "#ffffff", // Example background color
+    labels: [...defaultLabelsIds],
+    members: [adminId],
     // lists,
   });
 
@@ -115,11 +123,7 @@ async function createWorkspace(name: string, admin: any) {
 
   for (let i = 0; i < 2; i++) {
     const board = await createBoard(`Board ${i + 1}`, admin._id);
-    boards.push({
-      boardId: board._id,
-      name: board.name,
-      boardBg: board.bg,
-    });
+    boards.push(board._id);
   }
 
   const workspace = new WorkspaceModel({
@@ -127,14 +131,7 @@ async function createWorkspace(name: string, admin: any) {
     shortName: name.slice(0, 3),
     description: `${name} description`,
     boards,
-    members: [
-      {
-        memberId: admin._id,
-        username: admin.username,
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-      },
-    ],
+    members: [admin._id],
     admin: admin._id,
   });
 

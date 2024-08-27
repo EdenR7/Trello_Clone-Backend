@@ -6,6 +6,7 @@ import ListModel from "../models/list.model";
 import mongoose, { startSession, Types } from "mongoose";
 import BoardModel from "../models/board.model";
 import { VALIDATE_USER } from "../utils/boardUtilFuncs";
+import { CardI } from "../types/card.types";
 
 export async function createList(
   req: AuthRequest,
@@ -22,20 +23,31 @@ export async function createList(
   try {
     session.startTransaction();
 
-    const board = await BoardModel.findOneAndUpdate(
-      { _id: boardId, ...VALIDATE_USER(req) },
-      { $inc: { listsNumber: 1 } },
-      { session, new: true }
-    );
+    const [board, lists] = await Promise.all([
+      BoardModel.findOneAndUpdate(
+        { _id: boardId, ...VALIDATE_USER(req) },
+        { $inc: { listsNumber: 1 } },
+        { session, new: true }
+      ),
+      ListModel.find({
+        board: boardId,
+        isArchived: false,
+      }),
+    ]);
 
-    if (!board) {
+    if (!board || !lists) {
       throw new CustomError("Board not found", 404);
     }
+
+    let maxPos = 0;
+    lists.forEach((list) => {
+      if (list.position > maxPos) maxPos = list.position;
+    });
 
     const list = new ListModel({
       name,
       board: boardId,
-      position: board.listsNumber,
+      position: Math.floor(maxPos + 1),
     });
     await list.save({ session });
     await session.commitTransaction();
@@ -57,7 +69,7 @@ export async function getBoardsLists(
 ) {
   const { boardId } = req.params;
   try {
-    const lists = await ListModel.find({ board: boardId })
+    const lists = await ListModel.find({ board: boardId, isArchived: false })
       .populate({
         path: "cards",
         match: { isArchived: false },
@@ -108,10 +120,19 @@ export async function createCard(
   try {
     if (!title) throw new CustomError("Title is required", 400);
 
-    const newCardList = await ListModel.findById(listId).session(session);
+    const newCardList = await ListModel.findById(listId).populate({
+      path: "cards",
+      select: "position",
+    });
     if (!newCardList) throw new CustomError("List not found", 404);
 
-    const cardPosition = newCardList.cards.length + 1;
+    console.log(newCardList.cards);
+    let cardPosition = 0;
+    newCardList.cards.forEach((card: any) => {
+      if (card.position > cardPosition) cardPosition = card.position;
+    });
+
+    cardPosition = Math.floor(cardPosition + 1);
 
     const newCard = new CardModel({
       title,

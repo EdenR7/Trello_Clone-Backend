@@ -97,6 +97,7 @@ export function VALIDATE_USER(req: AuthRequest) {
     $or: [
       { admin: (req as AuthRequest).userId },
       { "members.memberId": req.userId },
+      { members: { $elemMatch: { memberId: req.userId } } },
     ],
   };
 }
@@ -143,9 +144,7 @@ export async function addCardsToLists(sortedLists: ListI[]) {
     throw new CustomError("Error adding cards to lists", 500);
   }
 }
-export async function reOrderCardsPositions(
-  listId: string | Types.ObjectId,
-) {
+export async function reOrderCardsPositions(listId: string | Types.ObjectId) {
   try {
     const cards = await CardModel.find({ list: listId }).sort({
       position: 1,

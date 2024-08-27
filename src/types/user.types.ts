@@ -1,5 +1,4 @@
 import { Document, Types } from "mongoose";
-import { BoardSubDocumentI } from "./subDocument.types";
 
 export interface UserI extends Document {
   username: string;
@@ -9,6 +8,6 @@ export interface UserI extends Document {
   lastName: string;
   workspaces: Types.ObjectId[];
   // Img*-?
-  sttaredBoards: BoardSubDocumentI[];
-  recentBoards: BoardSubDocumentI[];
+  sttaredBoards: Types.ObjectId[];
+  recentBoards: Types.ObjectId[];
 }

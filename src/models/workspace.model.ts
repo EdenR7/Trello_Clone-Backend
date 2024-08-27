@@ -1,8 +1,5 @@
 import { model, Schema } from "mongoose";
 import { WorkspaceI } from "../types/workspace.types";
-import { activitySubDocumentSchema } from "./activity.model";
-import { memberSubDocumentSchema } from "./user.model";
-import { boardSubDocumentSchema } from "./board.model";
 
 const workspaceSchema = new Schema<WorkspaceI>({
   name: {
@@ -17,20 +14,27 @@ const workspaceSchema = new Schema<WorkspaceI>({
     type: String,
     required: true,
   },
-  boards: {
-    type: [boardSubDocumentSchema],
-    default: [],
-    required: true,
-  },
-  members: {
-    type: [memberSubDocumentSchema],
-    default: [],
-    required: true,
-  },
+  boards: [
+    { type: Schema.Types.ObjectId, ref: "Board" },
+    {
+      default: [],
+    },
+  ],
+  members: [
+    { type: Schema.Types.ObjectId, ref: "User" },
+    {
+      default: [],
+    },
+  ],
   admin: {
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  bg: {
+    type: String,
+    default: "white",
+    // default: "https://source.unsplash.com/random",
   },
   // activity: {
   //   type: [activitySubDocumentSchema],
