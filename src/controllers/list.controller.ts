@@ -7,7 +7,6 @@ import mongoose, { startSession, Types } from "mongoose";
 import BoardModel from "../models/board.model";
 import { VALIDATE_USER } from "../utils/boardUtilFuncs";
 
-
 export async function createList(
   req: AuthRequest,
   res: Response,
@@ -30,8 +29,6 @@ export async function createList(
     );
 
     if (!board) {
-      await session.abortTransaction();
-      session.endSession();
       throw new CustomError("Board not found", 404);
     }
 
@@ -45,6 +42,7 @@ export async function createList(
 
     res.status(201).json(list);
   } catch (error) {
+    await session.abortTransaction();
     console.error("createList error:", error);
     next(error);
   } finally {
@@ -134,7 +132,6 @@ export async function createCard(
   } catch (error) {
     // If any error occurs, abort the transaction
     await session.abortTransaction();
-    session.endSession();
     console.error("Error in createCard function:", error);
     next(error);
   } finally {
@@ -164,15 +161,12 @@ export async function removeCard(
     );
 
     if (!list) {
-      await session.abortTransaction();
-      session.endSession();
       throw new CustomError("List not found", 404);
     }
 
     await CardModel.findByIdAndDelete(cardId, { session });
 
     await session.commitTransaction();
-    session.endSession();
 
     res.status(200).json(list);
   } catch (error) {
