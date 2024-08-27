@@ -9,6 +9,7 @@ import { verifyToken } from "./middlewares/auth.middleware";
 import cardRouter from "./routes/card.routes";
 import boardRouter from "./routes/board.routes";
 import listRouter from "./routes/list.routes";
+import workspaceRouter from "./routes/workspace.routes";
 
 const app: Application = express();
 
@@ -22,6 +23,7 @@ export async function main() {
   // Routes
   app.use("/api/auth", authRouter);
   app.use("/api/user", verifyToken, userRouter);
+  app.use("/api/workspace", verifyToken, workspaceRouter);
   app.use("/api/card", verifyToken, cardRouter);
   app.use("/api/board", verifyToken, boardRouter);
   app.use("/api/list", verifyToken, listRouter);

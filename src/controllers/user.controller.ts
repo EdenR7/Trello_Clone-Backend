@@ -12,7 +12,11 @@ export const getUser = async (
   next: NextFunction
 ) => {
   try {
-    const user = await UserModel.findById(req.userId).select("-password");
+    const user = await UserModel.findById(req.userId)
+      .select("-password")
+      .populate({ path: "workspaces", select: ["name", "bg", "_id"] })
+      .populate({ path: "sttaredBoards", select: ["name", "bg", "_id"] })
+      .populate({ path: "recentBoards", select: ["name", "bg", "_id"] });
 
     if (!user) {
       throw new CustomError("User not found", 404);
@@ -46,43 +50,44 @@ export async function updateStarredBoards(
   next: NextFunction
 ) {
   const { boardId } = req.params;
-  if (!boardId) {
-    throw new CustomError("Board ID is required", 400);
-  }
-  try {
-    const user = await UserModel.findById(req.userId);
 
-    if (!user) {
-      throw new CustomError("User not found", 404);
-    }
+  try {
+    const [user, board] = await Promise.all([
+      UserModel.findById(req.userId),
+      BoardModel.findOne({ _id: boardId, ...VALIDATE_USER(req) }),
+    ]);
+    if (!user || !board) throw new CustomError("User or Board not found", 404);
 
     const boardExist = user.sttaredBoards.find(
-      (board) => board.boardId.toString() === boardId
+      (board) => board._id.toString() === boardId
     );
-
+    let updatedUser;
     if (boardExist) {
-      user.sttaredBoards = user.sttaredBoards.filter(
-        (board) => board.boardId.toString() !== boardId
-      );
+      updatedUser = await UserModel.findByIdAndUpdate(
+        req.userId,
+        {
+          $pull: { sttaredBoards: boardId },
+        },
+        { new: true }
+      )
+        .select("-password")
+        .populate({ path: "workspaces", select: ["name", "bg", "_id"] })
+        .populate({ path: "sttaredBoards", select: ["name", "bg", "_id"] })
+        .populate({ path: "recentBoards", select: ["name", "bg", "_id"] });
     } else {
-      const board = await BoardModel.findOne({
-        _id: boardId,
-        ...VALIDATE_USER(req),
-      });
-      if (!board) {
-        throw new CustomError("Board not found", 404);
-      }
-      user.sttaredBoards.push({
-        boardId: new Types.ObjectId(boardId),
-        name: board.name,
-        boardBg: board.bg,
-      });
+      updatedUser = await UserModel.findByIdAndUpdate(
+        req.userId,
+        { $push: { sttaredBoards: boardId } },
+        { new: true }
+      )
+        .select("-password")
+        .populate({ path: "workspaces", select: ["name", "bg", "_id"] })
+        .populate({ path: "sttaredBoards", select: ["name", "bg", "_id"] })
+        .populate({ path: "recentBoards", select: ["name", "bg", "_id"] });
     }
-
-    await user.save();
-    res.json(user);
+    res.status(200).json(updatedUser);
   } catch (error) {
-    console.log("addBoardToFavourites Error");
+    console.log("changeStar error: ");
     next(error);
   }
 }

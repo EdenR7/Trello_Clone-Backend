@@ -19,16 +19,15 @@ import {
   updateDescription,
   updateName,
 } from "../controllers/board.controller";
-import { sortBoardLists } from "../middlewares/board.middleware";
 
 const boardRouter = Router();
 
 boardRouter.get("/:id", getBoard);
-boardRouter.delete("/:id", deleteBoard);
-boardRouter.post("/", createBoard);
+boardRouter.post("/:workspaceId", createBoard);
 boardRouter.patch("/:id/bg", updateBoardBg);
 boardRouter.patch("/:id/member/add", addMember);
 boardRouter.delete("/:id/member/remove", removeMember);
+boardRouter.delete("/:id/:workspaceId", deleteBoard);
 boardRouter.patch("/:id/description", updateDescription);
 boardRouter.patch("/:id/name", updateName);
 

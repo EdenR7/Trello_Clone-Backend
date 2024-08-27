@@ -9,8 +9,9 @@ export interface WorkspaceI {
   name: string;
   shortName: string;
   description: string;
-  boards: BoardSubDocumentI[];
-  members: MemberSubDocumentI[];
+  boards: Types.ObjectId[];
+  members: Types.ObjectId[];
   admin: Types.ObjectId;
   activity: ActivitySubDocumentI[];
+  bg: string;
 }

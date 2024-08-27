@@ -166,6 +166,7 @@ export async function addMemberToArr(
   }
 }
 
+// need to validate
 export async function removeMemberFromArr(
   req: AuthRequest,
   res: Response,

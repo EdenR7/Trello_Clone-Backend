@@ -3,21 +3,24 @@ import { BoardSubDocumentI } from "../types/subDocument.types";
 import { memberSubDocumentSchema } from "./user.model";
 import { BoardI } from "../types/board.types";
 
-export const boardSubDocumentSchema = new Schema<BoardSubDocumentI>({
-  boardId: {
-    type: Schema.Types.ObjectId,
-    ref: "Board",
-    required: true,
+export const boardSubDocumentSchema = new Schema<BoardSubDocumentI>(
+  {
+    boardId: {
+      type: Schema.Types.ObjectId,
+      ref: "Board",
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    boardBg: {
+      type: String,
+      required: true,
+    },
   },
-  name: {
-    type: String,
-    required: true,
-  },
-  boardBg: {
-    type: String,
-    required: true,
-  },
-});
+  { _id: false }
+);
 
 const boardSchema = new Schema<BoardI>({
   admin: {
@@ -38,7 +41,7 @@ const boardSchema = new Schema<BoardI>({
   labels: {
     type: [Schema.Types.ObjectId],
     ref: "Label",
-    default: [], // We can define default values for arrays
+    default: [],
   },
   description: {
     type: String,
@@ -48,12 +51,6 @@ const boardSchema = new Schema<BoardI>({
     type: String,
     required: true,
   },
-  // lists: {
-  //   type: [Schema.Types.ObjectId],
-  //   ref: "List",
-  //   default: [],
-  //   required: true,
-  // },
   archivedLists: {
     type: [
       new Schema(

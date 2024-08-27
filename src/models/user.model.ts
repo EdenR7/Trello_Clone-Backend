@@ -51,14 +51,18 @@ const userSchema = new Schema<UserI>({
     default: [],
     ref: "Workspace",
   },
-  sttaredBoards: {
-    type: [boardSubDocumentSchema],
-    default: [],
-  },
-  recentBoards: {
-    type: [boardSubDocumentSchema],
-    default: [],
-  },
+  sttaredBoards: [
+    { type: Schema.Types.ObjectId, ref: "Board" },
+    {
+      default: [],
+    },
+  ],
+  recentBoards: [
+    { type: Schema.Types.ObjectId, ref: "Board" },
+    {
+      default: [],
+    },
+  ],
 });
 
 const UserModel = model<UserI>("User", userSchema);
