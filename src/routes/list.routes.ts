@@ -6,6 +6,7 @@ import {
   getList,
   removeCard,
   updateName,
+  updatePosition,
 } from "../controllers/list.controller";
 
 const listRouter = Router();
@@ -15,6 +16,7 @@ listRouter.get("/:boardId", getBoardsLists);
 listRouter.post("/:boardId", createList);
 listRouter.get("/:listId/", getList);
 listRouter.post("/:listId/", updateName);
+listRouter.patch("/:listId/position", updatePosition);
 
 //card routes
 listRouter.post("/:listId/card/add", createCard);
