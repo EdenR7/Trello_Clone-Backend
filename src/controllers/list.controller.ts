@@ -5,7 +5,7 @@ import CardModel from "../models/card.model";
 import ListModel from "../models/list.model";
 import mongoose, { startSession, Types } from "mongoose";
 import BoardModel from "../models/board.model";
-import { VALIDATE_USER } from "../utils/boardUtilFuncs";
+import { reOrderListsPositions, VALIDATE_USER } from "../utils/boardUtilFuncs";
 import { CardI } from "../types/card.types";
 
 export async function createList(
@@ -242,11 +242,32 @@ export async function updatePosition(
     if (!list) {
       throw new CustomError("List not found", 404);
     }
-    console.log("list: ", list);
+    if (countDecimalPlaces(newPosition) > 10) {
+      await reOrderListsPositions(list.board);
+      const reorderedlists = await ListModel.find({
+        board: list.board,
+        isArchived: false,
+      }).populate({
+        path: "cards",
+        match: { isArchived: false },
+        options: { sort: { position: 1 } },
+      });
+      console.log(reorderedlists);
+
+      return res.status(200).json(reorderedlists);
+    }
 
     res.status(200).json(list);
   } catch (error) {
     console.log("updatePosition error: ");
     next(error);
   }
+}
+
+function countDecimalPlaces(number: string) {
+  const numStr = number.toString();
+  if (numStr.includes(".")) {
+    return numStr.split(".")[1].length;
+  }
+  return 0;
 }
