@@ -102,18 +102,21 @@ export function VALIDATE_USER(req: AuthRequest) {
   };
 }
 export async function reOrderListsPositions(
-  boardId: string | Types.ObjectId,
-  documentsToChange: number
+  boardId: string | Types.ObjectId
+  // documentsToChange: number
 ) {
   try {
-    const lists = await ListModel.find({ board: boardId }).sort({
+    const lists = await ListModel.find({
+      board: boardId,
+      isArchived: false,
+    }).sort({
       position: 1,
     });
     if (!lists) throw new Error();
 
     const adjustedLists = [];
 
-    for (let idx = 0; idx < documentsToChange; idx++) {
+    for (let idx = 0; idx < lists.length; idx++) {
       const list = lists[idx];
 
       const reMakeList = await ListModel.findByIdAndUpdate(
@@ -121,7 +124,8 @@ export async function reOrderListsPositions(
         { $set: { position: idx + 1 } },
         { new: true }
       );
-      // if (!reMakeList) throw new CustomError("List not found", 404);
+      console.log(reMakeList);
+
       adjustedLists.push(reMakeList);
     }
     return adjustedLists;
