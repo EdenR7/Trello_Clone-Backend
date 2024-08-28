@@ -171,15 +171,16 @@ export async function updateBoardBg(
   res: Response,
   next: NextFunction
 ) {
-  const { bg } = req.body;
+  const { background, bgType } = req.body;
   try {
-    if (!bg) throw new CustomError("Background is required", 400);
+    if (!background || !bgType)
+      throw new CustomError("Background and background type is required", 400);
     const board = await BoardModel.findOneAndUpdate(
       {
         _id: req.params.id,
         ...VALIDATE_USER(req),
       },
-      { bg },
+      { bg: { background, bgType } },
       { new: true }
     );
     if (!board) throw new CustomError("Board not found", 404);
