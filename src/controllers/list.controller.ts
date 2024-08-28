@@ -5,7 +5,11 @@ import CardModel from "../models/card.model";
 import ListModel from "../models/list.model";
 import mongoose, { startSession, Types } from "mongoose";
 import BoardModel from "../models/board.model";
-import { reOrderListsPositions, VALIDATE_USER } from "../utils/boardUtilFuncs";
+import {
+  countDecimalPlaces,
+  reOrderListsPositions,
+  VALIDATE_USER,
+} from "../utils/boardUtilFuncs";
 import { CardI } from "../types/card.types";
 
 export async function createList(
@@ -96,6 +100,7 @@ export async function getList(
       match: { isArchived: false },
       options: { sort: { position: 1 } },
     });
+
     if (!list) {
       throw new CustomError("List not found", 404);
     }
@@ -262,12 +267,4 @@ export async function updatePosition(
     console.log("updatePosition error: ");
     next(error);
   }
-}
-
-function countDecimalPlaces(number: string) {
-  const numStr = number.toString();
-  if (numStr.includes(".")) {
-    return numStr.split(".")[1].length;
-  }
-  return 0;
 }

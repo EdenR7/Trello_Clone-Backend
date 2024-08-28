@@ -6,6 +6,8 @@ import {
   addTodoToArr,
   changeCardDescription,
   getCard,
+  moveCardBetweenLists,
+  moveCardInList,
   removeBgCover,
   removeChecklistFromArr,
   removeMemberFromArr,
@@ -50,4 +52,8 @@ cardRouter.patch("/:cardId/checklist/toggleComplete", toggleTodoComplete);
 cardRouter.patch("/:cardId/label/toggle", toggleLabelOnCard);
 
 cardRouter.patch("/:cardId/description", changeCardDescription);
+
+cardRouter.patch("/:cardId/position", moveCardInList);
+cardRouter.patch("/:cardId/list/position/:listId", moveCardBetweenLists);
+
 export default cardRouter;
