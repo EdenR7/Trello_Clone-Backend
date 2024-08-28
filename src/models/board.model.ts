@@ -15,7 +15,7 @@ export const boardSubDocumentSchema = new Schema<BoardSubDocumentI>(
       required: true,
     },
     boardBg: {
-      type: String,
+      type: { background: String, bgType: String },
       required: true,
     },
   },
@@ -29,8 +29,8 @@ const boardSchema = new Schema<BoardI>({
     required: true,
   },
   bg: {
-    type: String,
-    default: "white",
+    type: { background: String, bgType: String },
+    default: { background: "white", bgType: "color" },
   },
   members: {
     type: [Schema.Types.ObjectId],

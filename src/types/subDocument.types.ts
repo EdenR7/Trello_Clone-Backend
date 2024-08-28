@@ -1,9 +1,10 @@
 import { Types } from "mongoose";
+import { bgTypeOptions } from "./board.types";
 
 export interface BoardSubDocumentI {
   boardId: Types.ObjectId;
   name: string;
-  boardBg: string;
+  boardBg: { background: string; bgType: bgTypeOptions };
 }
 export interface ActivitySubDocumentI {
   by: Types.ObjectId; // user Id
