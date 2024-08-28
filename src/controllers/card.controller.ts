@@ -469,3 +469,26 @@ export async function toggleLabelOnCard(
     next(error);
   }
 }
+
+export async function changeCardDescription(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { descContent } = req.body;
+  try {
+    const card = await CardModel.findByIdAndUpdate(
+      cardId,
+      { description: descContent },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("changeCardDescription error: ", error);
+    next(error);
+  }
+}

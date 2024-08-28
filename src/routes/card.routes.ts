@@ -4,6 +4,7 @@ import {
   addChecklistToArr,
   addMemberToArr,
   addTodoToArr,
+  changeCardDescription,
   getCard,
   removeBgCover,
   removeChecklistFromArr,
@@ -48,4 +49,5 @@ cardRouter.patch("/:cardId/checklist/toggleComplete", toggleTodoComplete);
 //Label routes
 cardRouter.patch("/:cardId/label/toggle", toggleLabelOnCard);
 
+cardRouter.patch("/:cardId/description", changeCardDescription);
 export default cardRouter;
