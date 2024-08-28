@@ -222,3 +222,31 @@ export async function updateName(
     next(error);
   }
 }
+
+export async function updatePosition(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { listId } = req.params;
+  const { newPosition } = req.body;
+
+  try {
+    if (!newPosition) throw new CustomError("New position is required", 400);
+
+    const list = await ListModel.findByIdAndUpdate(
+      listId,
+      { position: newPosition },
+      { new: true, runValidators: true }
+    );
+    if (!list) {
+      throw new CustomError("List not found", 404);
+    }
+    console.log("list: ", list);
+
+    res.status(200).json(list);
+  } catch (error) {
+    console.log("updatePosition error: ");
+    next(error);
+  }
+}
