@@ -174,3 +174,10 @@ export async function reOrderCardsPositions(listId: string | Types.ObjectId) {
     throw new CustomError("Error reordering cards", 500);
   }
 }
+export function countDecimalPlaces(number: string) {
+  const numStr = number.toString();
+  if (numStr.includes(".")) {
+    return numStr.split(".")[1].length;
+  }
+  return 0;
+}

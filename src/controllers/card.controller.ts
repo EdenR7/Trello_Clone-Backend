@@ -3,6 +3,12 @@ import { AuthRequest } from "../types/auth.types";
 import CardModel from "../models/card.model";
 import { CustomError } from "../utils/errors/CustomError";
 import UserModel from "../models/user.model";
+import {
+  countDecimalPlaces,
+  reOrderCardsPositions,
+} from "../utils/boardUtilFuncs";
+import ListModel from "../models/list.model";
+import { startSession, Types } from "mongoose";
 
 export async function getCard(
   req: AuthRequest,
@@ -490,5 +496,94 @@ export async function changeCardDescription(
   } catch (error) {
     console.log("changeCardDescription error: ", error);
     next(error);
+  }
+}
+
+export async function moveCardInList(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { newPosition } = req.body;
+
+  try {
+    if (!newPosition) throw new CustomError("New position is required", 400);
+    const card = await CardModel.findByIdAndUpdate(
+      cardId,
+      { position: newPosition },
+      { new: true, runValidators: true }
+    );
+    if (!card) {
+      throw new CustomError("Card not found", 404);
+    }
+    if (countDecimalPlaces(newPosition) > 10) {
+      await reOrderCardsPositions(card.list);
+    }
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("moveCardInList error: ", error);
+    next(error);
+  }
+}
+
+// add session
+export async function moveCardBetweenLists(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId, listId } = req.params;
+  const { newPosition } = req.body;
+  const session = await startSession();
+
+  const cardObjectId = new Types.ObjectId(cardId);
+  const listObjectId = new Types.ObjectId(listId);
+  try {
+    session.startTransaction();
+    if (!newPosition) throw new CustomError("New position is required", 400);
+    console.log("newPosition: ", newPosition);
+
+    const [card, list] = await Promise.all([
+      CardModel.findById(cardId),
+      ListModel.findByIdAndUpdate(
+        listId,
+        {
+          $push: { cards: cardObjectId },
+        },
+        { new: true, runValidators: true }
+      ).session(session),
+    ]);
+    if (!card || !list) throw new CustomError("Card or List not found", 404);
+    console.log(card.list);
+
+    const [updatedList, updatedCard] = await Promise.all([
+      ListModel.findByIdAndUpdate(
+        card.list,
+        { $pull: { cards: card._id } },
+        { new: true, runValidators: true }
+      ).session(session),
+      CardModel.findByIdAndUpdate(
+        cardId,
+        { list: listObjectId, position: newPosition },
+        { new: true, runValidators: true }
+      ).session(session),
+    ]);
+    if (!updatedList || !updatedCard)
+      throw new CustomError("List not found", 404);
+    console.log("updatedList: ", updatedList);
+
+    await session.commitTransaction();
+
+    if (countDecimalPlaces(newPosition) > 10) {
+      await reOrderCardsPositions(listId);
+    }
+    res.status(200).json(updatedCard);
+  } catch (error) {
+    session.abortTransaction();
+    console.log("moveCardBetweenLists error: ", error);
+    next(error);
+  } finally {
+    session.endSession();
   }
 }
