@@ -44,7 +44,7 @@ cardRouter.post("/:cardId/date/add", addCardDates); //send an empty object {} if
 cardRouter.post("/:cardId/checklist/addChecklist", addChecklistToArr);
 cardRouter.delete("/:cardId/checklist/removeChecklist", removeChecklistFromArr);
 cardRouter.post("/:cardId/checklist/addTodo", addTodoToArr);
-cardRouter.delete("/:cardId/checklist/removeTodo", removeTodoFromArr);
+cardRouter.patch("/:cardId/checklist/removeTodo", removeTodoFromArr);
 cardRouter.patch("/:cardId/checklist/updateTitle", updateTodoTitle);
 cardRouter.patch("/:cardId/checklist/toggleComplete", toggleTodoComplete);
 
