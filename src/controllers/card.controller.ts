@@ -520,6 +520,7 @@ export async function moveCardInList(
     if (countDecimalPlaces(newPosition) > 10) {
       await reOrderCardsPositions(card.list);
     }
+
     res.status(200).json(card);
   } catch (error) {
     console.log("moveCardInList error: ", error);
@@ -555,7 +556,6 @@ export async function moveCardBetweenLists(
       ).session(session),
     ]);
     if (!card || !list) throw new CustomError("Card or List not found", 404);
-    console.log(card.list);
 
     const [updatedList, updatedCard] = await Promise.all([
       ListModel.findByIdAndUpdate(
