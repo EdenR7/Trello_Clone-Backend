@@ -17,6 +17,7 @@ import {
   updateBgCoverColor,
   updateBgCoverState,
   updateCardTitle,
+  updateChecklistTitle,
   updateTodoTitle,
 } from "../controllers/card.controller";
 
@@ -42,7 +43,11 @@ cardRouter.post("/:cardId/date/add", addCardDates); //send an empty object {} if
 
 //Checklist routes
 cardRouter.post("/:cardId/checklist/addChecklist", addChecklistToArr);
-cardRouter.delete("/:cardId/checklist/removeChecklist", removeChecklistFromArr);
+cardRouter.delete("/:cardId/checklist/:checklistId", removeChecklistFromArr);
+cardRouter.patch(
+  "/:cardId/checklist/updateChecklistTitle",
+  updateChecklistTitle
+);
 cardRouter.post("/:cardId/checklist/addTodo", addTodoToArr);
 cardRouter.patch("/:cardId/checklist/removeTodo", removeTodoFromArr);
 cardRouter.patch("/:cardId/checklist/updateTitle", updateTodoTitle);

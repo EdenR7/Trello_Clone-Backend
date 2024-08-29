@@ -289,8 +289,8 @@ export async function removeChecklistFromArr(
   res: Response,
   next: NextFunction
 ) {
-  const { cardId } = req.params;
-  const { checklistId } = req.body;
+  const { cardId, checklistId } = req.params;
+
   try {
     const card = await CardModel.findByIdAndUpdate(
       cardId,
@@ -305,6 +305,49 @@ export async function removeChecklistFromArr(
     res.status(200).json(card);
   } catch (error) {
     console.log("addChecklist error: ", error);
+    next(error);
+  }
+}
+
+export async function updateChecklistTitle(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+  const { checklistId, newChecklistTitle } = req.body;
+
+  if (!checklistId || !newChecklistTitle) {
+    return next(
+      new CustomError("checklistId and newChecklistTitle are required", 400)
+    );
+  }
+
+  try {
+    const card = await CardModel.findOneAndUpdate(
+      {
+        _id: cardId,
+        "checklist._id": checklistId,
+      },
+      {
+        $set: {
+          "checklist.$[chk].name": newChecklistTitle,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+        arrayFilters: [{ "chk._id": checklistId }],
+      }
+    );
+
+    if (!card) {
+      throw new CustomError("Card or checklist not found", 404);
+    }
+
+    res.status(200).json(card);
+  } catch (error) {
+    console.log("updateChecklistTitle error: ", error);
     next(error);
   }
 }
