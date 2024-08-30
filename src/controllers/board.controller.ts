@@ -568,9 +568,9 @@ export async function updateBoardLabel(
 ) {
   const { labelId } = req.params;
   const { title, color } = req.body;
-  if (!title || !color)
-    throw new CustomError("title and color are required", 400);
   try {
+    if (!title && !color)
+      throw new CustomError("title and color are required", 400);
     const updateFields: any = {};
 
     if (title) updateFields["title"] = title;
