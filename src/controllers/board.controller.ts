@@ -26,27 +26,10 @@ export async function getBoard(
     const board = await BoardModel.findOne({
       _id: req.params.id,
       ...VALIDATE_USER(req),
-    }).populate("labels");
+    })
+      .populate("labels")
+      .populate({ path: "members", select: "username firstName lastName" });
     if (!board) throw new CustomError("Board not found", 404);
-
-    // const [lists, user] = await Promise.all([
-    //   ListModel.find({ board: board._id, isArchived: false }).sort({
-    //     position: 1,
-    //   }),
-    //   // update recentBoards
-    //   UserModel.findByIdAndUpdate(
-    //     req.userId,
-    //     {
-    //       $pull: { recentBoards: { boardId: board._id } },
-    //     },
-    //     { new: true }
-    //   ),
-    // ]);
-
-    // if (!lists) throw new CustomError("Lists not found", 404);
-
-    // // populate the cards manually
-    // await addCardsToLists(lists);
 
     const user = await UserModel.findByIdAndUpdate(
       req.userId,
