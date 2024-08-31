@@ -88,6 +88,28 @@ export async function getBoardsLists(
   }
 }
 
+// export async function getList(
+//   req: AuthRequest,
+//   res: Response,
+//   next: NextFunction
+// ) {
+//   const { listId } = req.params;
+//   try {
+//     const list = await ListModel.findById(listId).populate({
+//       path: "cards",
+//       match: { isArchived: false },
+//       options: { sort: { position: 1 } },
+//     });
+
+//     if (!list) {
+//       throw new CustomError("List not found", 404);
+//     }
+//     res.status(200).json(list);
+//   } catch (error) {
+//     console.log("getList error: ");
+//     next(error);
+//   }
+// }
 export async function getList(
   req: AuthRequest,
   res: Response,
@@ -101,12 +123,19 @@ export async function getList(
       options: { sort: { position: 1 } },
     });
 
+    if (list) {
+      await list.populate({
+        path: "cards.labels",
+        model: "Label",
+      });
+    }
+
     if (!list) {
       throw new CustomError("List not found", 404);
     }
     res.status(200).json(list);
   } catch (error) {
-    console.log("getList error: ");
+    console.log("getList error: ", error);
     next(error);
   }
 }
