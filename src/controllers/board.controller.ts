@@ -167,6 +167,8 @@ export async function updateBoardBg(
       { bg: { background, bgType } },
       { new: true }
     );
+    console.log(board?.bg);
+
     if (!board) throw new CustomError("Board not found", 404);
     res.status(200).json(board);
   } catch (error) {
