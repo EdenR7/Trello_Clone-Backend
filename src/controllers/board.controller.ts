@@ -491,6 +491,8 @@ export async function createBoardLabel(
     ).populate("labels");
 
     if (cardId) {
+      console.log("if works");
+
       //Make this func util for add new label to card
       const card = await CardModel.findByIdAndUpdate(
         cardId,

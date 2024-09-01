@@ -36,7 +36,7 @@ cardRouter.patch("/:cardId/title/edit", updateCardTitle);
 
 //Member routes
 cardRouter.post("/:cardId/member/add", addMemberToArr);
-cardRouter.delete("/:cardId/member/remove", removeMemberFromArr);
+cardRouter.delete("/:cardId/member/remove/:memberId", removeMemberFromArr);
 
 //Date routes
 cardRouter.post("/:cardId/date/add", addCardDates); //send an empty object {} if we want to delete

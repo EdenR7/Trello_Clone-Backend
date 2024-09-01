@@ -96,7 +96,7 @@ async function createList(
 
 async function createBoard(name: string, adminId: any) {
   // const lists = [];
-  const defaultLabels: LabelI[] = await LabelModel.find({ title: "Default" });
+  const defaultLabels: LabelI[] = await LabelModel.find({ title: "123" });
   if (!defaultLabels || !defaultLabels.length)
     throw new CustomError("Default Labels not found", 404);
   const defaultLabelsIds = defaultLabels.map((label: LabelI) => label._id);
@@ -104,7 +104,7 @@ async function createBoard(name: string, adminId: any) {
   const board = new BoardModel({
     admin: adminId,
     name,
-    bg: "#ffffff", // Example background color
+    bg: { background: "#FFFFFF", bgType: "color" }, // Example background color
     labels: [...defaultLabelsIds],
     members: [adminId],
     // lists,
@@ -141,12 +141,12 @@ async function createWorkspace(name: string, admin: any) {
 
 async function createLabels() {
   const labels = [
-    { title: "Default", color: "#61bd4f" },
-    { title: "Default", color: "#f2d600" },
-    { title: "Default", color: "#ff9f1a" },
-    { title: "Default", color: "#eb5a46" },
-    { title: "Default", color: "#c377e0" },
-    { title: "Default", color: "#0079bf" },
+    { title: "123", color: "#4bce97" },
+    { title: "123", color: "#0c66e4" },
+    { title: "123", color: "#5b7f24" },
+    { title: "123", color: "#e774bb" },
+    { title: "123", color: "#94c748" },
+    { title: "123", color: "#579dff" },
   ];
 
   await Promise.all(

@@ -174,19 +174,17 @@ export async function addMemberToArr(
   }
 }
 
-// need to validate
 export async function removeMemberFromArr(
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
-  const { cardId } = req.params;
-  const { memberId } = req.body;
+  const { cardId, memberId } = req.params;
 
   try {
     const member = await UserModel.findById(memberId);
     if (!member) {
-      throw new CustomError("Memberr not found", 404);
+      throw new CustomError("Member not found", 404);
     }
 
     const card = await CardModel.findById(cardId);
@@ -194,17 +192,24 @@ export async function removeMemberFromArr(
       throw new CustomError("Card not found", 404);
     }
 
-    if (!card.members.includes(memberId)) {
-      return res.status(400).json({ message: "Member is not in this card." });
-    }
-
     const updatedCard = await CardModel.findByIdAndUpdate(
       cardId,
-      { $pull: { members: memberId } },
+      {
+        $pull: {
+          members: { memberId: new Types.ObjectId(memberId) },
+        },
+      },
       { new: true, runValidators: true }
     );
 
-    res.status(200).json(updatedCard);
+    if (!updatedCard) {
+      throw new CustomError("Failed to update card", 500);
+    }
+
+    // Ensure the types are correct
+    const typedUpdatedCard = updatedCard;
+
+    res.status(200).json(typedUpdatedCard);
   } catch (error) {
     console.log("removeMemberFromArr error: ", error);
     next(error);
