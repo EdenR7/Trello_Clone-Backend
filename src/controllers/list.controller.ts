@@ -199,8 +199,8 @@ export async function removeCard(
   res: Response,
   next: NextFunction
 ) {
-  const { listId } = req.params;
-  const { cardId } = req.body;
+  const { listId, cardId } = req.params;
+  console.log(listId, cardId);
 
   if (!listId || !cardId) {
     return next(new CustomError("listId and cardId must be provided", 400));

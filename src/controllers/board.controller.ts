@@ -28,7 +28,8 @@ export async function getBoard(
       ...VALIDATE_USER(req),
     })
       .populate("labels")
-      .populate({ path: "members", select: "username firstName lastName" });
+      .populate({ path: "members", select: "username firstName lastName" })
+      .populate({ path: "archivedCards" });
     if (!board) throw new CustomError("Board not found", 404);
 
     const user = await UserModel.findByIdAndUpdate(
@@ -316,17 +317,6 @@ export async function archiveList(
     );
     if (!board) throw new CustomError("Board not found", 404);
 
-    // const lists = await ListModel.find({
-    //   board: board._id,
-    //   isArchived: false,
-    //   _id: { $ne: listId },
-    // }).sort({
-    //   position: 1,
-    // });
-    // if (!lists) throw new CustomError("Lists not found", 404);
-
-    // await addCardsToLists(lists);
-
     await session.commitTransaction();
 
     res.status(200).json(board);
@@ -380,10 +370,6 @@ export async function unArchiveList(
     );
     await session.commitTransaction();
 
-    // const lists = await reOrderListsPositions(board._id, board.listsNumber);
-    // if (!lists) throw new CustomError("Lists not found", 404);
-    // await addCardsToLists(lists as ListI[]);
-
     res.status(200).json(board);
   } catch (error) {
     await session.abortTransaction();
@@ -426,17 +412,7 @@ export async function archiveCard(
 
     if (!board) throw new CustomError("Board not found", 404);
 
-    // const lists = await ListModel.find({
-    //   board: board._id,
-    //   isArchived: false,
-    // }).sort({
-    //   position: 1,
-    // });
-
-    // if (!lists) throw new CustomError("Lists not found", 404);
-
     await session.commitTransaction();
-    // await addCardsToLists(lists);
 
     res.status(200).json(board);
   } catch (error) {
@@ -486,29 +462,7 @@ export async function unArchiveCard(
     card.isArchived = false;
     card.position = Math.floor(maxPos + 1);
     await card.save();
-
-    // const card = await CardModel.findOneAndUpdate(
-    //   { _id: cardId, isArchived: true },
-    //   { $set: { isArchived: false, position: 10000 } },
-    //   { new: true, session }
-    // );
-    // if (!card) throw new CustomError("Card not found", 404);
-
     await session.commitTransaction();
-
-    // const cardsList = await ListModel.findById(card.list);
-    // if (!cardsList) throw new CustomError("List not found", 404);
-
-    // await reOrderCardsPositions(cardsList._id);
-    // const lists = await ListModel.find({
-    //   board: board._id,
-    //   isArchived: false,
-    // }).sort({
-    //   position: 1,
-    // });
-    // if (!lists) throw new CustomError("Lists not found", 404);
-
-    // await addCardsToLists(lists);
 
     res.status(200).json(board);
   } catch (error) {
@@ -526,7 +480,7 @@ export async function createBoardLabel(
   next: NextFunction
 ) {
   try {
-    const { title, color } = req.body;
+    const { title, color, cardId } = req.body;
     const label = new LabelModel({ title, color });
     await label.save();
 
@@ -535,6 +489,16 @@ export async function createBoardLabel(
       { $push: { labels: label._id } },
       { new: true }
     ).populate("labels");
+
+    if (cardId) {
+      //Make this func util for add new label to card
+      const card = await CardModel.findByIdAndUpdate(
+        cardId,
+        { $push: { labels: label._id } },
+        { new: true }
+      );
+      if (!card) throw new CustomError("Card not found", 404);
+    }
 
     if (!board) throw new CustomError("Board not found", 404);
     res.status(200).json(board);
