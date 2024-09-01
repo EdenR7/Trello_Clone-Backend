@@ -20,6 +20,6 @@ listRouter.patch("/:listId/position", updatePosition);
 
 //card routes
 listRouter.post("/:listId/card/add", createCard);
-listRouter.delete("/:listId/card/remove", removeCard);
+listRouter.delete("/:listId/card/:cardId", removeCard);
 
 export default listRouter;
