@@ -107,6 +107,7 @@ async function createBoard(name: string, adminId: any) {
     bg: { background: "#FFFFFF", bgType: "color" }, // Example background color
     labels: [...defaultLabelsIds],
     members: [adminId],
+    listsNumber: 3,
     // lists,
   });
 
