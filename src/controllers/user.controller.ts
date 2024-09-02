@@ -3,7 +3,6 @@ import UserModel from "../models/user.model";
 import { AuthRequest } from "../types/auth.types";
 import { CustomError } from "../utils/errors/CustomError";
 import BoardModel from "../models/board.model";
-import { Types } from "mongoose";
 import { VALIDATE_USER } from "../utils/boardUtilFuncs";
 
 export const getUser = async (

@@ -76,7 +76,7 @@ export async function createBoard(
     const boardExists = await BoardModel.findOne({ name, admin: req.userId });
     if (boardExists) throw new CustomError("Board name already exists", 400);
 
-    const defaultLabels: LabelI[] = await LabelModel.find({ title: "Default" });
+    const defaultLabels: LabelI[] = await LabelModel.find({ title: "123" });
     if (!defaultLabels || !defaultLabels.length)
       throw new CustomError("Default Labels not found", 404);
     const defaultLabelsIds = defaultLabels.map((label: LabelI) => label._id);
@@ -100,6 +100,20 @@ export async function createBoard(
       { session }
     );
     if (!workspace) throw new CustomError("Workspace not found", 404);
+
+    await UserModel.findByIdAndUpdate(
+      req.userId,
+      {
+        $push: {
+          recentBoards: {
+            $each: [board._id],
+            $position: 0,
+            $slice: 7,
+          },
+        },
+      },
+      { new: true, runValidators: true, session }
+    );
     await session.commitTransaction();
     res.status(201).json(board);
   } catch (error) {
@@ -167,6 +181,8 @@ export async function updateBoardBg(
       { bg: { background, bgType } },
       { new: true }
     );
+    console.log(board?.bg);
+
     if (!board) throw new CustomError("Board not found", 404);
     res.status(200).json(board);
   } catch (error) {
