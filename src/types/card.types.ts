@@ -35,4 +35,5 @@ export interface CardI extends Document {
   position: number;
   list: Types.ObjectId;
   isArchived: boolean;
+  isComplete: boolean;
 }

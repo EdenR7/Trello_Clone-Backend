@@ -12,6 +12,7 @@ import {
   removeChecklistFromArr,
   removeMemberFromArr,
   removeTodoFromArr,
+  toggleCardIsComplete,
   toggleLabelOnCard,
   toggleTodoComplete,
   updateBgCoverColor,
@@ -60,5 +61,7 @@ cardRouter.patch("/:cardId/description", changeCardDescription);
 
 cardRouter.patch("/:cardId/position", moveCardInList);
 cardRouter.patch("/:cardId/list/position/:listId", moveCardBetweenLists);
+
+cardRouter.patch("/:cardId/toggleComplete", toggleCardIsComplete);
 
 export default cardRouter;

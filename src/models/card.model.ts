@@ -4,8 +4,6 @@ import { CardI, ChecklistI, TodoI } from "../types/card.types";
 import { memberSubDocumentSchema } from "./user.model";
 import { LabelI } from "../types/label.types";
 
-
-
 const todoSchema = new Schema<TodoI>({
   title: {
     type: String,
@@ -44,6 +42,11 @@ const cardSchema = new Schema<CardI>({
   members: {
     type: [memberSubDocumentSchema],
     default: [],
+    required: true,
+  },
+  isComplete: {
+    type: Boolean,
+    default: false,
     required: true,
   },
   labels: {

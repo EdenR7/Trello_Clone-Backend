@@ -233,9 +233,6 @@ export async function addCardDates(
       if (!parsedStartDate || isNaN(parsedStartDate.getTime())) {
         throw new CustomError("Invalid start date format.", 400);
       }
-      if (parsedStartDate.toISOString().split("T")[1] !== "00:00:00.000Z") {
-        throw new CustomError("Start date should not include time.", 400);
-      }
     }
 
     // Validate due date
@@ -635,5 +632,29 @@ export async function moveCardBetweenLists(
     next(error);
   } finally {
     session.endSession();
+  }
+}
+
+export async function toggleCardIsComplete(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { cardId } = req.params;
+
+  try {
+    const card = await CardModel.findById(cardId);
+    if (!card) {
+      throw new CustomError("card not found", 404);
+    }
+
+    card.isComplete = !card.isComplete;
+
+    await card.save();
+
+    return res.status(200).json(card);
+  } catch (error) {
+    console.log("addChecklist error: ", error);
+    next(error);
   }
 }
