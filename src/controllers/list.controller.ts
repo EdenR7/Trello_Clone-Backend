@@ -281,12 +281,17 @@ export async function updatePosition(
       const reorderedlists = await ListModel.find({
         board: list.board,
         isArchived: false,
-      }).populate({
-        path: "cards",
-        match: { isArchived: false },
-        options: { sort: { position: 1 } },
       });
-      console.log(reorderedlists);
+      // await reOrderListsPositions(list.board);
+      // const reorderedlists = await ListModel.find({
+      //   board: list.board,
+      //   isArchived: false,
+      // }).populate({
+      //   path: "cards",
+      //   match: { isArchived: false },
+      //   options: { sort: { position: 1 } },
+      // });
+      // console.log(reorderedlists);
 
       return res.status(200).json(reorderedlists);
     }
