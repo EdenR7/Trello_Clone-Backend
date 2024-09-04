@@ -78,9 +78,15 @@ export async function getBoardsLists(
         path: "cards",
         match: { isArchived: false },
         options: { sort: { position: 1 } },
+        populate: {
+          path: "labels", // Populate the labels in the cards
+          model: "Label", // Reference to the Label model
+        },
       })
       .sort({ position: 1 });
+
     if (!lists) throw new CustomError("Lists not found", 404);
+
     return res.status(200).json(lists);
   } catch (error) {
     console.log("getBoardsLists error: ");
