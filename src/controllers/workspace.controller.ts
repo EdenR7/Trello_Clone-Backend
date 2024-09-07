@@ -30,7 +30,9 @@ export async function getUserWorkspaces(
   next: NextFunction
 ) {
   try {
-    const workspaces = await WorkspaceModel.find({ ...VALIDATE_USER(req) });
+    const workspaces = await WorkspaceModel.find({
+      ...VALIDATE_USER(req),
+    }).populate("boards");
     if (!workspaces) throw new CustomError("Workspaces not found", 404);
     return res.status(200).json(workspaces);
   } catch (error) {
