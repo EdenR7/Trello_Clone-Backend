@@ -31,7 +31,7 @@ export async function getBoard(
       .populate({ path: "members", select: "username firstName lastName" })
       .populate({
         path: "archivedCards",
-        populate: { path: "labels" }, // Populate labels within archivedCards
+        populate: { path: "labels" },
       });
     if (!board) throw new CustomError("Board not found", 404);
 
@@ -517,6 +517,7 @@ export async function archiveAllListCards(
       { session }
     );
     if (!cards) throw new CustomError("Cards not found", 404);
+    console.log(cards);
 
     const board = await BoardModel.findByIdAndUpdate(
       id,
@@ -528,7 +529,7 @@ export async function archiveAllListCards(
     if (!board) throw new CustomError("Board not found", 404);
 
     await session.commitTransaction();
-    res.status(200).json({ message: "Cards archived" });
+    res.status(200).json(board);
   } catch (error) {
     await session.abortTransaction();
     console.log("archiveAllListCards error: ");
@@ -582,11 +583,11 @@ export async function updateBoardLabel(
   const { labelId } = req.params;
   const { title, color } = req.body;
   try {
-    if (!title && !color)
-      throw new CustomError("title and color are required", 400);
+    if (!color) throw new CustomError("title and color are required", 400);
+    const labelTitle = title ? title : "";
     const updateFields: any = {};
 
-    if (title) updateFields["title"] = title;
+    updateFields["title"] = labelTitle;
     if (color) updateFields["color"] = color;
 
     const updatedLabel = await LabelModel.findByIdAndUpdate(

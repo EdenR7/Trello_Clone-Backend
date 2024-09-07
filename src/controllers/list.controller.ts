@@ -386,7 +386,6 @@ export async function moveList(
       throw new CustomError("List not found", 404);
     }
 
-    console.log(updatedList);
     await session.commitTransaction();
 
     return res.status(200).json(updatedList);
