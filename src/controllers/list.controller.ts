@@ -166,7 +166,6 @@ export async function createCard(
     });
     if (!newCardList) throw new CustomError("List not found", 404);
 
-    console.log(newCardList.cards);
     let cardPosition = 0;
     newCardList.cards.forEach((card: any) => {
       if (card.position > cardPosition) cardPosition = card.position;
