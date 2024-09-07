@@ -142,12 +142,12 @@ async function createWorkspace(name: string, admin: any) {
 
 async function createLabels() {
   const labels = [
-    { title: "123", color: "#4bce97" },
-    { title: "123", color: "#0c66e4" },
-    { title: "123", color: "#5b7f24" },
-    { title: "123", color: "#e774bb" },
-    { title: "123", color: "#94c748" },
-    { title: "123", color: "#579dff" },
+    { title: "123", color: "#baf3db" },
+    { title: "123", color: "#f8e6a0" },
+    { title: "123", color: "#e2b203" },
+    { title: "123", color: "#cce0ff" },
+    { title: "123", color: "#fdd0ec" },
+    { title: "123", color: "#1d7f8c" },
   ];
 
   await Promise.all(

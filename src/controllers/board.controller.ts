@@ -69,7 +69,7 @@ export async function createBoard(
   next: NextFunction
 ) {
   //get also bg
-  const { name } = req.body;
+  const { name, boardBg } = req.body;
   const session = await startSession();
   try {
     if (!name) throw new CustomError("Name is required", 400);
@@ -86,6 +86,7 @@ export async function createBoard(
       admin: req.userId,
       members: [req.userId],
       labels: [...defaultLabelsIds],
+      bg: boardBg,
     });
     session.startTransaction();
     await board.save({ session });
@@ -157,6 +158,7 @@ export async function deleteBoard(
     res.status(200).json({ message: "Board deleted" });
   } catch (error) {
     session.abortTransaction();
+
     console.log("deleteBoard error: ");
     next(error);
   } finally {
