@@ -29,7 +29,10 @@ export async function getBoard(
     })
       .populate("labels")
       .populate({ path: "members", select: "username firstName lastName" })
-      .populate({ path: "archivedCards" });
+      .populate({
+        path: "archivedCards",
+        populate: { path: "labels" }, // Populate labels within archivedCards
+      });
     if (!board) throw new CustomError("Board not found", 404);
 
     const user = await UserModel.findByIdAndUpdate(
