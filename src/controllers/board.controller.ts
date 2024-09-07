@@ -492,6 +492,49 @@ export async function unArchiveCard(
   }
 }
 
+export async function archiveAllListCards(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { listId, id } = req.params;
+  const session = await startSession();
+  try {
+    session.startTransaction();
+    const list = await ListModel.findOne({
+      _id: listId,
+      board: req.params.id,
+      isArchived: false,
+    });
+    if (!list) throw new CustomError("List not found", 404);
+
+    const cards = await CardModel.updateMany(
+      { list: listId, isArchived: false },
+      { $set: { isArchived: true } },
+      { session }
+    );
+    if (!cards) throw new CustomError("Cards not found", 404);
+
+    const board = await BoardModel.findByIdAndUpdate(
+      id,
+      {
+        $push: { archivedCards: { $each: list.cards } },
+      },
+      { new: true, runValidators: true, session }
+    );
+    if (!board) throw new CustomError("Board not found", 404);
+
+    await session.commitTransaction();
+    res.status(200).json({ message: "Cards archived" });
+  } catch (error) {
+    await session.abortTransaction();
+    console.log("archiveAllListCards error: ");
+    next(error);
+  } finally {
+    session.endSession();
+  }
+}
+
 export async function createBoardLabel(
   req: AuthRequest,
   res: Response,
