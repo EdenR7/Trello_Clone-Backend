@@ -4,7 +4,7 @@ import { LabelI } from "../types/label.types";
 export const labelSchema = new Schema<LabelI>({
   title: {
     type: String,
-    required: true,
+    default: "",
   },
   color: {
     type: String,

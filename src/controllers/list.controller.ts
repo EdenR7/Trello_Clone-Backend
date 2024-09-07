@@ -94,28 +94,6 @@ export async function getBoardsLists(
   }
 }
 
-// export async function getList(
-//   req: AuthRequest,
-//   res: Response,
-//   next: NextFunction
-// ) {
-//   const { listId } = req.params;
-//   try {
-//     const list = await ListModel.findById(listId).populate({
-//       path: "cards",
-//       match: { isArchived: false },
-//       options: { sort: { position: 1 } },
-//     });
-
-//     if (!list) {
-//       throw new CustomError("List not found", 404);
-//     }
-//     res.status(200).json(list);
-//   } catch (error) {
-//     console.log("getList error: ");
-//     next(error);
-//   }
-// }
 export async function getList(
   req: AuthRequest,
   res: Response,
@@ -305,5 +283,117 @@ export async function updatePosition(
   } catch (error) {
     console.log("updatePosition error: ");
     next(error);
+  }
+}
+
+export async function moveList(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  console.log(1);
+
+  const { sourceId, destinationId, listId } = req.params;
+  const { newIndex } = req.body;
+
+  const session = await startSession();
+  try {
+    session.startTransaction();
+
+    if (sourceId !== destinationId) {
+      const sourceBoard = await BoardModel.findByIdAndUpdate(
+        sourceId,
+        {
+          $inc: { listsNumber: -1 },
+        },
+        { session, new: true }
+      );
+      const destinationBoard = await BoardModel.findByIdAndUpdate(
+        destinationId,
+        {
+          $inc: { listsNumber: 1 },
+        },
+        { session, new: true }
+      );
+      if (!sourceBoard || !destinationBoard) {
+        throw new CustomError("Board not found", 404);
+      }
+    }
+
+    const destBoardLists = await ListModel.find({
+      board: destinationId,
+      isArchived: false,
+    }).sort({ position: 1 });
+
+    let updatedList;
+
+    if (!destBoardLists) {
+      throw new CustomError("Destination board lists not found", 404);
+    }
+    // list pos handling
+    if (destBoardLists.length === 0) {
+      // empty board
+      updatedList = await ListModel.findByIdAndUpdate(
+        listId,
+        {
+          board: destinationId,
+          position: 1,
+        },
+        { session }
+      );
+    } else if (newIndex === 1) {
+      // insert at the top
+      updatedList = await ListModel.findByIdAndUpdate(
+        listId,
+        {
+          board: destinationId,
+          position: destBoardLists[0].position / 2,
+        },
+        { session }
+      );
+    } else if (newIndex >= destBoardLists.length) {
+      // insert at the bottom
+      updatedList = await ListModel.findByIdAndUpdate(
+        listId,
+        {
+          board: destinationId,
+          position: Math.floor(
+            destBoardLists[destBoardLists.length - 1].position + 1
+          ),
+        },
+        { session }
+      );
+    } else {
+      //middle
+      let updatedBoards = [...destBoardLists];
+      if (sourceId === destinationId) {
+        updatedBoards = destBoardLists.filter(
+          (list) => list._id.toString() === listId
+        );
+      }
+      const newPos =
+        (destBoardLists[newIndex - 1].position +
+          destBoardLists[newIndex].position) /
+        2;
+      updatedList = await ListModel.findByIdAndUpdate(
+        listId,
+        { board: destinationId, position: newPos },
+        { session, new: true }
+      );
+    }
+
+    if (!updatedList) {
+      throw new CustomError("List not found", 404);
+    }
+
+    await session.commitTransaction();
+
+    return res.status(200).json(updatedList);
+  } catch (error) {
+    session.abortTransaction();
+    console.log("moveList error: ");
+    next(error);
+  } finally {
+    session.endSession();
   }
 }

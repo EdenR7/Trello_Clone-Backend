@@ -104,7 +104,7 @@ async function createBoard(name: string, adminId: any) {
   const board = new BoardModel({
     admin: adminId,
     name,
-    bg: { background: "#FFFFFF", bgType: "color" }, // Example background color
+    bg: { background: "#0079BF", bgType: "color" }, // Example background color
     labels: [...defaultLabelsIds],
     members: [adminId],
     listsNumber: 3,

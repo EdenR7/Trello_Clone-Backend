@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   addMember,
+  archiveAllListCards,
   archiveCard,
   archiveList,
   // archiveList,
@@ -35,6 +36,7 @@ boardRouter.patch("/:id/list/:listId/archive", archiveList);
 boardRouter.patch("/:id/list/:listId/unarchive", unArchiveList);
 boardRouter.patch("/:id/card/:cardId/archive", archiveCard);
 boardRouter.patch("/:id/card/:cardId/unarchive", unArchiveCard);
+boardRouter.patch("/:id/list/:listId/cards/archive", archiveAllListCards); // archive card
 // delete card
 
 boardRouter.post("/:id/label", createBoardLabel);
