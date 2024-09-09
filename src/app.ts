@@ -16,6 +16,8 @@ const app: Application = express();
 export async function main() {
   await connectDB();
 
+  app.use(express.static("public"));
+  const path = require("path");
   app.use(express.json());
   app.use(cors());
 
@@ -30,6 +32,10 @@ export async function main() {
   app.use("/api/list", verifyToken, listRouter);
 
   app.use(errorHandler);
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+  });
 }
 
 export default app;
