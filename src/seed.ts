@@ -10,6 +10,7 @@ import CardModel from "./models/card.model";
 import LabelModel from "./models/label.model";
 import { LabelI } from "./types/label.types";
 import { CustomError } from "./utils/errors/CustomError";
+import { createLabels } from "./utils/boardUtilFuncs";
 
 const SALT_ROUNDS = 10;
 
@@ -140,25 +141,9 @@ async function createWorkspace(name: string, admin: any) {
   return workspace;
 }
 
-async function createLabels() {
-  const labels = [
-    { title: "123", color: "#baf3db" },
-    { title: "123", color: "#f8e6a0" },
-    { title: "123", color: "#e2b203" },
-    { title: "123", color: "#cce0ff" },
-    { title: "123", color: "#fdd0ec" },
-    { title: "123", color: "#1d7f8c" },
-  ];
-
-  await Promise.all(
-    labels.map(async (label) => {
-      const newLabel = new LabelModel(label);
-      await newLabel.save();
-    })
-  );
-}
-
 async function seedDB() {
+  console.log("Seeding database...");
+
   try {
     await connectDB();
 
