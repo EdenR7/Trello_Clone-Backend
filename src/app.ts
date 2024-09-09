@@ -15,6 +15,7 @@ const app: Application = express();
 
 export async function main() {
   await connectDB();
+
   app.use(express.json());
   app.use(cors());
 

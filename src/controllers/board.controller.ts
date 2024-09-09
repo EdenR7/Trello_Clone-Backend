@@ -7,6 +7,7 @@ import { startSession, Types } from "mongoose";
 import ListModel from "../models/list.model";
 import {
   addCardsToLists,
+  createLabels,
   reOrderCardsPositions,
   reOrderListsPositions,
   VALIDATE_USER,
@@ -79,10 +80,10 @@ export async function createBoard(
     const boardExists = await BoardModel.findOne({ name, admin: req.userId });
     if (boardExists) throw new CustomError("Board name already exists", 400);
 
-    const defaultLabels: LabelI[] = await LabelModel.find({ title: "123" });
-    if (!defaultLabels || !defaultLabels.length)
-      throw new CustomError("Default Labels not found", 404);
-    const defaultLabelsIds = defaultLabels.map((label: LabelI) => label._id);
+    const labels = await createLabels();
+    if (!labels || labels.length === 0)
+      throw new CustomError("Labels not found", 404);
+    const defaultLabelsIds = labels.map((label: LabelI) => label._id);
 
     const board = new BoardModel({
       name,

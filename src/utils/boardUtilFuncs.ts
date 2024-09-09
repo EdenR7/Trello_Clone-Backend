@@ -9,6 +9,7 @@ import { LabelI } from "../types/label.types";
 import { CustomError } from "./errors/CustomError";
 import { Types } from "mongoose";
 import { ListI } from "../types/list.types";
+import LabelModel from "../models/label.model";
 
 // export async function reOrderListsPositions(board: BoardI) {
 //   try {
@@ -180,4 +181,24 @@ export function countDecimalPlaces(number: string) {
     return numStr.split(".")[1].length;
   }
   return 0;
+}
+
+export async function createLabels() {
+  const labels = [
+    { title: "123", color: "#baf3db" },
+    { title: "123", color: "#f8e6a0" },
+    { title: "123", color: "#e2b203" },
+    { title: "123", color: "#cce0ff" },
+    { title: "123", color: "#fdd0ec" },
+    { title: "123", color: "#1d7f8c" },
+  ];
+  const createdLabels: LabelI[] = [];
+  await Promise.all(
+    labels.map(async (label) => {
+      const newLabel = new LabelModel(label);
+      await newLabel.save();
+      createdLabels.push(newLabel);
+    })
+  );
+  return createdLabels;
 }
