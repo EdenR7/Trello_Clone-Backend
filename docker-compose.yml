@@ -1,0 +1,11 @@
+version: '3'
+services:
+  backend:
+    build: .
+    ports:
+      - "${PORT}:${PORT}"  # Use port from .env file
+    env_file:
+      - .env  # Reference to the .env file
+    volumes:
+      - .:/usr/src/app  # Mount the current directory inside the container
+    command: npm run start  # Start the application
