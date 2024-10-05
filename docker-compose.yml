@@ -2,10 +2,14 @@ version: '3'
 services:
   backend:
     build: .
+    image: trella-back-image:latest  # Set a custom image name
+    container_name: trella-back-container
     ports:
-      - "${PORT}:${PORT}"  # Use port from .env file
+      - "${PORT:-3000}:3000"  # Map port 3000 inside the container to port specified in .env or default to 3000
     env_file:
-      - .env  # Reference to the .env file
+      - .env  # Load environment variables from the .env file
     volumes:
-      - .:/usr/src/app  # Mount the current directory inside the container
-    command: npm run start  # Start the application
+      - .:/src/app  # Mount the project directory into the container for live code changes in dev mode
+      - /src/app/node_modules  # Avoid copying local node_modules into the container
+    command: >
+      sh -c "if [ '$NODE_ENV' = 'development' ]; then npm run dev; else npm start; fi"  # Run npm run dev in development, npm start in production

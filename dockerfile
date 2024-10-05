@@ -7,8 +7,8 @@ WORKDIR /src/app
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-# Install dependencies, ensuring that bcrypt and other native modules are built for the correct platform
-RUN npm install --build-from-source bcrypt
+# Install dependencies
+RUN npm install 
 
 # Copy the rest of the application code to the container
 COPY . .
