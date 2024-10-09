@@ -61,7 +61,7 @@ export const login = async (
       throw new CustomError("Authentication failed", 401);
     }
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
-      expiresIn: "5h",
+      expiresIn: "5d",
     });
     res.status(200).json(token);
   } catch (error) {
