@@ -23,6 +23,8 @@ export async function getBoard(
   res: Response,
   next: NextFunction
 ) {
+  console.log("getBoard");
+  
   try {
     const board = await BoardModel.findOne({
       _id: req.params.id,
@@ -46,7 +48,7 @@ export async function getBoard(
 
     if (!user) throw new CustomError("User not found", 404);
     // update recentBoards
-    await UserModel.findByIdAndUpdate(
+    const updatedUser =  await UserModel.findByIdAndUpdate(
       req.userId,
       {
         $push: {
@@ -59,6 +61,9 @@ export async function getBoard(
       },
       { new: true, runValidators: true }
     );
+
+    console.log("updatedUser", updatedUser);
+    
 
     res.status(200).json(board);
   } catch (error) {

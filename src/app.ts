@@ -20,13 +20,23 @@ export async function main() {
   const path = require("path");
   app.use(express.json());
   // app.use(cors());
-  app.use(cors({  
-    origin: '*',
+  const allowedOrigins = [
+    'http://trella-front-1.s3-website.eu-central-1.amazonaws.com',  // Production frontend URL (S3)
+    'http://localhost:5173'  // Development frontend URL (Vite default port)
+  ];
+  app.use(cors({
+    origin: function (origin, callback) {
+      if(!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true  // Allows cookies and authorization headers to be sent
   }));
-
-  // Middleware
 
   // Routes
   app.use("/api/auth", authRouter);

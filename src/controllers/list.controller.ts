@@ -130,7 +130,7 @@ export async function createCard(
   next: NextFunction
 ) {
   const { listId } = req.params;
-  const { title } = req.body;
+  const { title, place = "bottom" } = req.body;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -145,12 +145,20 @@ export async function createCard(
     if (!newCardList) throw new CustomError("List not found", 404);
 
     let cardPosition = 0;
-    newCardList.cards.forEach((card: any) => {
-      if (card.position > cardPosition) cardPosition = card.position;
-    });
+    if (place === "top") {
+      if (newCardList.cards.length > 0) {
+        // need to be tested
+        cardPosition = (newCardList.cards[0] as any).position / 2;
+      } else {
+        cardPosition = 1;
+      }
+    } else {
+      newCardList.cards.forEach((card: any) => {
+        if (card.position > cardPosition) cardPosition = card.position;
+      });
 
-    cardPosition = Math.floor(cardPosition + 1);
-
+      cardPosition = Math.floor(cardPosition + 1);
+    }
     const newCard = new CardModel({
       title,
       admin: req.userId,
