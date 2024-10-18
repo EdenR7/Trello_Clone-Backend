@@ -23,7 +23,6 @@ export async function getBoard(
   res: Response,
   next: NextFunction
 ) {
-  console.log("getBoard");
   
   try {
     const board = await BoardModel.findOne({
@@ -48,7 +47,7 @@ export async function getBoard(
 
     if (!user) throw new CustomError("User not found", 404);
     // update recentBoards
-    const updatedUser =  await UserModel.findByIdAndUpdate(
+    await UserModel.findByIdAndUpdate(
       req.userId,
       {
         $push: {
@@ -61,10 +60,7 @@ export async function getBoard(
       },
       { new: true, runValidators: true }
     );
-
-    console.log("updatedUser", updatedUser);
     
-
     res.status(200).json(board);
   } catch (error) {
     console.log("getBoard error: ");
@@ -342,6 +338,7 @@ export async function archiveList(
       },
       { new: true, runValidators: true, session }
     );
+    
     if (!board) throw new CustomError("Board not found", 404);
 
     await session.commitTransaction();
