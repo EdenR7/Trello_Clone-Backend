@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { getErrorData } from "../utils/errors/ErrorsFunctions";
 import { config } from "dotenv";
 import { CustomError } from "../utils/errors/CustomError";
+import { createWorkspace } from "./workspace.controller";
 
 config();
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -25,10 +26,11 @@ export const register = async (req: Request, res: Response) => {
       firstName,
       lastName,
     });
+    const initialWorkspace = await createWorkspace(`${username}'s Workspace`, newUser);
+    console.log("initialWorkspace", initialWorkspace);
+    newUser.workspaces.push(initialWorkspace._id);
+    
     await newUser.save();
-    // const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
-    //   expiresIn: "4h",
-    // });
 
     res.status(201).json({ message: "User registered" });
   } catch (error) {

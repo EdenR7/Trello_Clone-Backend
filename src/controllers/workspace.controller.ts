@@ -40,3 +40,16 @@ export async function getUserWorkspaces(
     next(error);
   }
 }
+
+export async function createWorkspace (name:string, admin:any) {
+  const workspace = new WorkspaceModel({
+    name,
+    shortName: name.slice(0, 3),
+    description: `${name} description`,
+    members: [admin._id],
+    admin: admin._id,
+  });
+
+  await workspace.save();
+  return workspace;
+}
