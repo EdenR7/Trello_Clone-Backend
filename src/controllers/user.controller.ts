@@ -90,3 +90,25 @@ export async function updateStarredBoards(
     next(error);
   }
 }
+
+export async function getAllUsers(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const { targetUsername } = req.query;
+
+  try {
+    if (!targetUsername) {
+      return res.json([]);
+    }
+    const users = await UserModel.find({
+      username: { $regex: targetUsername, $options: "i" },
+      _id: { $ne: req.userId },
+    }).limit(5);
+    return res.json(users);
+  } catch (error) {
+    console.log("getUsers Error");
+    next(error);
+  }
+}
