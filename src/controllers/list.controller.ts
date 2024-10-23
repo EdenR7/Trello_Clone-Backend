@@ -145,10 +145,14 @@ export async function createCard(
     if (!newCardList) throw new CustomError("List not found", 404);
 
     let cardPosition = 0;
+
     if (place === "top") {
       if (newCardList.cards.length > 0) {
         // need to be tested
-        cardPosition = (newCardList.cards[0] as any).position / 2;
+        const minPos = Math.min(
+          ...newCardList.cards.map((card: any) => card.position)
+        );
+        cardPosition = minPos / 2;
       } else {
         cardPosition = 1;
       }
