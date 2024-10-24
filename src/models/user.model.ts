@@ -63,6 +63,10 @@ const userSchema = new Schema<UserI>({
       default: [],
     },
   ],
+  isGuest: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const UserModel = model<UserI>("User", userSchema);
