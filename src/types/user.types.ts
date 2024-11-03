@@ -10,4 +10,5 @@ export interface UserI extends Document {
   // Img*-?
   sttaredBoards: Types.ObjectId[];
   recentBoards: Types.ObjectId[];
+  isGuest: boolean;
 }

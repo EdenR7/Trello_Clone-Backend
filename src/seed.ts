@@ -41,15 +41,18 @@ const users = [
 ];
 
 // Helper functions to create checklists
-function createChecklist(name: string) {
+export function createChecklist(name: string, todos: any[] = []) {
   return {
     name,
-    todos: [
-      { title: "Todo 1", isComplete: false },
-      { title: "Todo 2", isComplete: false },
-    ],
+    todos,
   };
 }
+
+async function createCardsOfCoding(
+  adminId: any,
+  position: number,
+  listId: Types.ObjectId
+) {}
 
 async function createCard(
   title: string,
@@ -97,7 +100,7 @@ async function createList(
 
 async function createBoard(name: string, adminId: any) {
   // const lists = [];
-  const defaultLabels: LabelI[] = await LabelModel.find({ title: "123" });
+  const defaultLabels: LabelI[] = await LabelModel.find({ title: "/123" });
   if (!defaultLabels || !defaultLabels.length)
     throw new CustomError("Default Labels not found", 404);
   const defaultLabelsIds = defaultLabels.map((label: LabelI) => label._id);
@@ -144,46 +147,46 @@ async function createWorkspace(name: string, admin: any) {
 async function seedDB() {
   console.log("Seeding database...");
 
-  try {
-    await connectDB();
+  // try {
+  //   await connectDB();
 
-    // Clear existing data
-    await UserModel.deleteMany({});
-    await WorkspaceModel.deleteMany({});
-    await BoardModel.deleteMany({});
-    await ListModel.deleteMany({});
-    await CardModel.deleteMany({});
-    await LabelModel.deleteMany({});
+  //   // Clear existing data
+  //   await UserModel.deleteMany({});
+  //   await WorkspaceModel.deleteMany({});
+  //   await BoardModel.deleteMany({});
+  //   await ListModel.deleteMany({});
+  //   await CardModel.deleteMany({});
+  //   await LabelModel.deleteMany({});
 
-    // Create users and their associated data
+  //   // Create users and their associated data
 
-    await createLabels();
+  //   await createLabels();
 
-    const createdUsers = await Promise.all(
-      users.map(async (u) => {
-        const hashedPassword = await bcrypt.hash(u.password, SALT_ROUNDS);
-        const user = new UserModel({ ...u, password: hashedPassword });
-        await user.save();
+  //   const createdUsers = await Promise.all(
+  //     users.map(async (u) => {
+  //       const hashedPassword = await bcrypt.hash(u.password, SALT_ROUNDS);
+  //       const user = new UserModel({ ...u, password: hashedPassword });
+  //       await user.save();
 
-        const workspace = await createWorkspace(
-          `${user.username}'s Workspace`,
-          user
-        );
-        user.workspaces.push(workspace._id);
-        await user.save();
+  //       const workspace = await createWorkspace(
+  //         `${user.username}'s Workspace`,
+  //         user
+  //       );
+  //       user.workspaces.push(workspace._id);
+  //       await user.save();
 
-        return user;
-      })
-    );
+  //       return user;
+  //     })
+  //   );
 
-    console.log(
-      "Database seeded successfully with users, workspaces, boards, lists, and cards."
-    );
-  } catch (err) {
-    console.error("Error seeding database:", err);
-  } finally {
-    connection.close();
-  }
+  //   console.log(
+  //     "Database seeded successfully with users, workspaces, boards, lists, and cards."
+  //   );
+  // } catch (err) {
+  //   console.error("Error seeding database:", err);
+  // } finally {
+  //   connection.close();
+  // }
 }
 
 seedDB();

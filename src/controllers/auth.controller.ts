@@ -6,10 +6,21 @@ import { getErrorData } from "../utils/errors/ErrorsFunctions";
 import { config } from "dotenv";
 import { CustomError } from "../utils/errors/CustomError";
 import { createWorkspace } from "./workspace.controller";
+import { ObjectId, startSession } from "mongoose";
+import { createLabels } from "../utils/boardUtilFuncs";
+import BoardModel from "../models/board.model";
+import { LabelI } from "../types/label.types";
+import ListModel from "../models/list.model";
+import CardModel from "../models/card.model";
+import { createChecklist } from "../seed";
+import {
+  generateCodingBoard,
+  generateDailyTasksBoard,
+} from "../helpers/generateGuestFuncs";
 
 config();
 const JWT_SECRET = process.env.JWT_SECRET as string;
-const SALT_ROUNDS = 10;
+export const SALT_ROUNDS = 10;
 
 export const register = async (req: Request, res: Response) => {
   const { firstName, lastName, email, username, password } = req.body;
@@ -26,10 +37,13 @@ export const register = async (req: Request, res: Response) => {
       firstName,
       lastName,
     });
-    const initialWorkspace = await createWorkspace(`${username}'s Workspace`, newUser);
+    const initialWorkspace = await createWorkspace(
+      `${username}'s Workspace`,
+      newUser
+    );
     console.log("initialWorkspace", initialWorkspace);
     newUser.workspaces.push(initialWorkspace._id);
-    
+
     await newUser.save();
 
     res.status(201).json({ message: "User registered" });
@@ -71,3 +85,57 @@ export const login = async (
     next(error);
   }
 };
+
+export async function generateAGuestUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const session = await startSession();
+
+  try {
+    session.startTransaction();
+    const guestsNumber = await UserModel.countDocuments({ isGuest: true });
+    const hashedPassword = await bcrypt.hash("1234", SALT_ROUNDS);
+
+    const newUser = new UserModel({
+      email: `guest${guestsNumber}@guest.com`,
+      password: hashedPassword,
+      username: `Guest${guestsNumber + 1}`,
+      firstName: "Guest",
+      lastName: "User",
+      isGuest: true,
+    });
+    const initialWorkspace = await createWorkspace(
+      `${newUser.username}'s Workspace`,
+      newUser
+    );
+
+    newUser.workspaces.push(initialWorkspace._id);
+
+    const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
+      expiresIn: "5d",
+    });
+
+    const codingBoard = await generateCodingBoard(session, newUser);
+    const dailyBoard = await generateDailyTasksBoard(session, newUser);
+
+    initialWorkspace.boards.push(codingBoard._id);
+    initialWorkspace.boards.push(dailyBoard._id);
+    newUser.recentBoards.push(codingBoard._id);
+    newUser.recentBoards.push(dailyBoard._id);
+    newUser.sttaredBoards.push(codingBoard._id);
+
+    await newUser.save({ session });
+    await initialWorkspace.save({ session });
+
+    await session.commitTransaction();
+    res.status(201).json({ token, username: newUser.username });
+  } catch (error) {
+    session.abortTransaction();
+
+    next(error);
+  } finally {
+    session.endSession();
+  }
+}

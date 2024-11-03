@@ -23,7 +23,6 @@ export async function getBoard(
   res: Response,
   next: NextFunction
 ) {
-  
   try {
     const board = await BoardModel.findOne({
       _id: req.params.id,
@@ -60,7 +59,7 @@ export async function getBoard(
       },
       { new: true, runValidators: true }
     );
-    
+
     res.status(200).json(board);
   } catch (error) {
     console.log("getBoard error: ");
@@ -77,6 +76,7 @@ export async function createBoard(
   const { name, boardBg } = req.body;
   const session = await startSession();
   try {
+    session.startTransaction();
     if (!name) throw new CustomError("Name is required", 400);
     const boardExists = await BoardModel.findOne({ name, admin: req.userId });
     if (boardExists) throw new CustomError("Board name already exists", 400);
@@ -93,7 +93,6 @@ export async function createBoard(
       labels: [...defaultLabelsIds],
       bg: boardBg,
     });
-    session.startTransaction();
     await board.save({ session });
 
     const workspace = await WorkspaceModel.findOneAndUpdate(
@@ -338,7 +337,7 @@ export async function archiveList(
       },
       { new: true, runValidators: true, session }
     );
-    
+
     if (!board) throw new CustomError("Board not found", 404);
 
     await session.commitTransaction();
