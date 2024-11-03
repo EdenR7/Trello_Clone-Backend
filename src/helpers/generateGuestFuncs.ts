@@ -30,7 +30,11 @@ export async function generateCodingBoard(
     const codingBoard = new BoardModel({
       admin: newUser._id,
       name: "Project Proccess",
-      bg: { background: "#0079BF", bgType: "color" }, // Example background color
+      bg: {
+        background:
+          "https://images.unsplash.com/photo-1724589613596-e269be5c0849?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        bgType: "image",
+      }, // Example background color
       labels: [...defaultLabelsIds],
       members: [newUser._id],
       listsNumber: 0,
@@ -274,5 +278,211 @@ export async function generateCodingBoard(
     return codingBoard;
   } catch (error) {
     throw new CustomError("Error generating coding board", 500);
+  }
+}
+
+export async function generateDailyTasksBoard(
+  session: ClientSession,
+  newUser: UserI
+) {
+  try {
+    // Define labels for the daily tasks board
+    const dailyLabelsDefinitions = [
+      { title: "Urgent", color: "#ca3521" },
+      { title: "Work", color: "#0052cc" },
+      { title: "Personal", color: "#4c9f70" },
+      { title: "Chores", color: "#f5cd47" },
+      { title: "Health", color: "#d36fd5" },
+      { title: "Family", color: "#f39237" },
+      { title: "Wellness", color: "#ff947f" },
+    ];
+    const dailyLabels = await createLabels(dailyLabelsDefinitions);
+    if (!dailyLabels || dailyLabels.length === 0)
+      throw new CustomError("Labels not found", 404);
+    const defaultLabelsIds = dailyLabels.map((label: LabelI) => label._id);
+
+    // Create the daily tasks board
+    const dailyTasksBoard = new BoardModel({
+      admin: newUser._id,
+      name: "Daily Tasks",
+      bg: {
+        background:
+          "linear-gradient(to bottom right, #1F845A 2%, #60C6D2 100%)",
+        bgType: "gradient",
+      },
+      labels: [...defaultLabelsIds],
+      members: [newUser._id],
+      listsNumber: 0,
+    });
+    await dailyTasksBoard.save({ session });
+
+    // Define lists and cards for the board
+    const listsAndCards = [
+      {
+        name: "Morning Routine",
+        position: 1,
+        cards: [
+          {
+            title: "Wake up and stretch",
+            position: 1,
+            labels: [
+              dailyLabels.find((label) => label.title === "Health")?._id,
+            ],
+          },
+          {
+            title: "Exercise (15 mins)",
+            position: 2,
+            checklist: [
+              {
+                name: "Exercise",
+                todos: [
+                  { title: "Warm-up", isComplete: false },
+                  { title: "Workout", isComplete: false },
+                ],
+              },
+            ],
+            labels: [
+              dailyLabels.find((label) => label.title === "Health")?._id,
+            ],
+          },
+          {
+            title: "Plan day’s priorities",
+            position: 3,
+            labels: [
+              dailyLabels.find((label) => label.title === "Personal")?._id,
+            ],
+          },
+        ],
+      },
+      {
+        name: "Work Tasks",
+        position: 2,
+        cards: [
+          {
+            title: "Finish project report",
+            position: 1,
+            checklist: [
+              {
+                name: "Report Tasks",
+                todos: [
+                  { title: "Draft outline", isComplete: false },
+                  { title: "Proofread", isComplete: false },
+                ],
+              },
+            ],
+            labels: [dailyLabels.find((label) => label.title === "Work")?._id],
+          },
+          {
+            title: "Emails and follow-ups",
+            position: 2,
+            labels: [dailyLabels.find((label) => label.title === "Work")?._id],
+          },
+          {
+            title: "Team meeting prep",
+            position: 3,
+            checklist: [
+              {
+                name: "Meeting Preparation",
+                todos: [
+                  { title: "Review notes", isComplete: false },
+                  { title: "Prepare agenda", isComplete: false },
+                ],
+              },
+            ],
+            labels: [
+              dailyLabels.find((label) => label.title === "Work")?._id,
+              dailyLabels.find((label) => label.title === "Urgent")?._id,
+            ],
+            dueDate: new Date(new Date().setHours(9, 0, 0)),
+          },
+          {
+            title: "Research project ideas",
+            position: 4,
+            labels: [
+              dailyLabels.find((label) => label.title === "Personal")?._id,
+            ],
+          },
+        ],
+      },
+      {
+        name: "Family Tasks",
+        position: 3,
+        cards: [
+          {
+            title: "Prepare breakfast for family",
+            position: 1,
+            checklist: [
+              {
+                name: "Breakfast prep",
+                todos: [
+                  { title: "Make coffee", isComplete: false },
+                  { title: "Prepare oatmeal", isComplete: false },
+                ],
+              },
+            ],
+            labels: [
+              dailyLabels.find((label) => label.title === "Chores")?._id,
+              dailyLabels.find((label) => label.title === "Family")?._id,
+            ],
+          },
+          {
+            title: "Get kids ready for school",
+            position: 2,
+            labels: [
+              dailyLabels.find((label) => label.title === "Family")?._id,
+            ],
+          },
+          {
+            title: "Family dinner",
+            position: 3,
+            checklist: [
+              {
+                name: "Dinner Tasks",
+                todos: [
+                  { title: "Prepare meal", isComplete: false },
+                  { title: "Set table", isComplete: false },
+                ],
+              },
+            ],
+            labels: [
+              dailyLabels.find((label) => label.title === "Family")?._id,
+              dailyLabels.find((label) => label.title === "Chores")?._id,
+            ],
+          },
+        ],
+      },
+    ];
+
+    // Create lists and cards within the session
+    for (const listData of listsAndCards) {
+      const newList = new ListModel({
+        name: listData.name,
+        position: listData.position,
+        cards: [],
+        board: dailyTasksBoard._id,
+      });
+      await newList.save({ session });
+
+      for (const cardData of listData.cards) {
+        const newCard = new CardModel({
+          admin: newUser._id,
+          title: cardData.title,
+          position: cardData.position,
+          list: newList._id,
+          checklist: cardData.checklist || [],
+          bgCover: { isCover: false, bg: "#ffffff" },
+          labels: cardData.labels || [],
+          dueDate: cardData.dueDate || null,
+          members: [],
+        });
+        await newCard.save({ session });
+        newList.cards.push(newCard._id as any);
+      }
+      await newList.save({ session });
+    }
+
+    return dailyTasksBoard;
+  } catch (error) {
+    throw new CustomError("Error generating daily tasks board", 500);
   }
 }

@@ -76,6 +76,7 @@ export async function createBoard(
   const { name, boardBg } = req.body;
   const session = await startSession();
   try {
+    session.startTransaction();
     if (!name) throw new CustomError("Name is required", 400);
     const boardExists = await BoardModel.findOne({ name, admin: req.userId });
     if (boardExists) throw new CustomError("Board name already exists", 400);
@@ -92,7 +93,6 @@ export async function createBoard(
       labels: [...defaultLabelsIds],
       bg: boardBg,
     });
-    session.startTransaction();
     await board.save({ session });
 
     const workspace = await WorkspaceModel.findOneAndUpdate(

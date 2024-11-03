@@ -184,12 +184,12 @@ export function countDecimalPlaces(number: string) {
 }
 
 const defaultLabels = [
-  { title: "/123", color: "#baf3db" },
-  { title: "/123", color: "#f8e6a0" },
-  { title: "/123", color: "#e2b203" },
-  { title: "/123", color: "#cce0ff" },
-  { title: "/123", color: "#fdd0ec" },
-  { title: "/123", color: "#1d7f8c" },
+  { title: "1", color: "#baf3db" },
+  { title: "2", color: "#f8e6a0" },
+  { title: "3", color: "#e2b203" },
+  { title: "4", color: "#cce0ff" },
+  { title: "5", color: "#fdd0ec" },
+  { title: "6", color: "#1d7f8c" },
 ];
 
 export async function createLabels(labels = [...defaultLabels]) {

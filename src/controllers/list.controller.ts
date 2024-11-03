@@ -133,9 +133,9 @@ export async function createCard(
   const { title, place = "bottom" } = req.body;
 
   const session = await mongoose.startSession();
-  session.startTransaction();
-
+  
   try {
+    session.startTransaction();
     if (!title) throw new CustomError("Title is required", 400);
 
     const newCardList = await ListModel.findById(listId).populate({

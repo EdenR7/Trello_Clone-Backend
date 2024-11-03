@@ -13,7 +13,10 @@ import { LabelI } from "../types/label.types";
 import ListModel from "../models/list.model";
 import CardModel from "../models/card.model";
 import { createChecklist } from "../seed";
-import { generateCodingBoard } from "../helpers/generateGuestFuncs";
+import {
+  generateCodingBoard,
+  generateDailyTasksBoard,
+} from "../helpers/generateGuestFuncs";
 
 config();
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -109,16 +112,21 @@ export async function generateAGuestUser(
     );
 
     newUser.workspaces.push(initialWorkspace._id);
-    await newUser.save({ session });
 
     const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
       expiresIn: "5d",
     });
 
     const codingBoard = await generateCodingBoard(session, newUser);
+    const dailyBoard = await generateDailyTasksBoard(session, newUser);
 
     initialWorkspace.boards.push(codingBoard._id);
+    initialWorkspace.boards.push(dailyBoard._id);
+    newUser.recentBoards.push(codingBoard._id);
+    newUser.recentBoards.push(dailyBoard._id);
+    newUser.sttaredBoards.push(codingBoard._id);
 
+    await newUser.save({ session });
     await initialWorkspace.save({ session });
 
     await session.commitTransaction();
