@@ -92,7 +92,8 @@ export async function generateAGuestUser(
   next: NextFunction
 ) {
   const session = await startSession();
-
+  console.log("New Guest");
+  
   try {
     session.startTransaction();
     const guestsNumber = await UserModel.countDocuments({ isGuest: true });
