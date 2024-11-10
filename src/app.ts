@@ -19,15 +19,12 @@ export async function main() {
   app.use(express.static("public"));
   const path = require("path");
   app.use(express.json());
-  // app.use(cors());
-  app.use(
-    cors({
-      origin: "*",
-      // methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      // allowedHeaders: ['Content-Type', 'Authorization'],
-      // credentials: true
-    })
-  );
+  app.use(cors());
+  // app.use(
+  //   cors({
+  //     origin: "*",
+  //   })
+  // );
 
   // Routes
   app.use("/api/auth", authRouter);
